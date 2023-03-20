@@ -6,9 +6,9 @@ from watchdog.events import FileSystemEventHandler
 class Handler(FileSystemEventHandler):
     def on_created(self, event): # 파일 생성시
         print (f'event type : {event.event_type}\n'
-               f'event src_path : {event.src_path}')
+               f'event src_path : {event.src_path}\n')
         if event.is_directory:
-            print ("디렉토리 생성")
+            print ("디렉토리 생성\n")
         else: # not event.is_directory
             """
             Fname : 파일 이름
@@ -17,11 +17,12 @@ class Handler(FileSystemEventHandler):
             Fname, Extension = os.path.splitext(os.path.basename(event.src_path))
 
             if Extension == '.txt':
-                print (".txt 파일 입니다.")
+                print (".txt 파일 입니다.\n")
             elif Extension == '.log':
-                print (".log 파일 입니다.")
+                print (".log 파일 입니다.\n")
+                
     def on_deleted(self, event):
-        print ("삭제 이벤트 발생")
+        print ("삭제 이벤트 발생\n")
 
     def on_moved(self, event): # 파일 이동시
         print (f'event type : {event.event_type}\n')
@@ -34,7 +35,7 @@ class Handler(FileSystemEventHandler):
 class Watcher:
     # 생성자
     def __init__(self, path):
-        print ("감시 중 ...")
+        print ("감시 중 ...\n")
         self.event_handler = None      # Handler
         self.observer = Observer()     # Observer 객체 생성
         self.target_directory = path   # 감시대상 경로
@@ -42,11 +43,8 @@ class Watcher:
 
     # func (1) 현재 작업 디렉토리
     def currentDirectorySetting(self):
-        print ("====================================")
-        print ("현재 작업 디렉토리:  ", end=" ")
         os.chdir(self.target_directory)
-        print ("{cwd}".format(cwd = os.getcwd()))
-        print ("====================================")
+        print (f"=== 현재 작업 디렉토리: {os.getcwd()}\n")
 
     # func (2)
     def run(self):
@@ -61,7 +59,7 @@ class Watcher:
             while True: # 무한 루프
                 time.sleep(1) # 1초 마다 대상 디렉토리 감시
         except KeyboardInterrupt as e: # 사용자에 의해 "ctrl + z" 발생시
-            print ("감시 중지...")
+            print ("감시 중지...\n")
             self.observer.stop() # 감시 중단
 
 def logCheck(logPath):

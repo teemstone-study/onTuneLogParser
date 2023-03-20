@@ -23,6 +23,10 @@ class WindowsEventHandler():
         hand = wevt.OpenEventLog(self.server,self.logtype)
         flags = wevt.EVENTLOG_FORWARDS_READ|wevt.EVENTLOG_SEQUENTIAL_READ
 
+        # Init eventlog file
+        f = open(self.filename, 'w', encoding='UTF8')
+        f.close()
+
         while True:
             events = wevt.ReadEventLog(hand, flags, 0)
             if len(events) == 0:

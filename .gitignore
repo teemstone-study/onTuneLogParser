@@ -1,2 +1,3 @@
 .venv/
-eventlog.txt
+windows_event_log/
+**/__pycache__/

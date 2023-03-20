@@ -11,7 +11,6 @@ class DrainHandler:
         self.config_file_name = dirname(__file__) + "/drain3.ini"
         self.log_file_name = filename
 
-
         config = TemplateMinerConfig()
         config.load(self.config_file_name)
         config.profiling_enabled = True
