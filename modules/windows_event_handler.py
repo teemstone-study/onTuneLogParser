@@ -9,30 +9,35 @@ class WindowsEventHandler():
         self.logtype = 'System'
 
         file_fullpath = os.path.dirname(os.path.abspath(__file__))
-        self.filename = file_fullpath + "\\..\\windows_event_log\\eventlog.txt"
+        self.eventfilename = file_fullpath + "\\..\\windows_event_log\\eventlog.txt"
+        self.drainfilename = file_fullpath + "\\..\\result\\eventlog_drain.txt"
         #current_locale = os.popen('systeminfo | findstr /B /C:"System Locale"').read()
         #current_locale = locale.getlocale(locale.LC_CTYPE)
         #total = wevt.GetNumberOfEventLogRecords(hand)
         #parent_directory = os.path.dirname(file_fullpath)
 
-        self.init_get_event()
+        self.initGetEvent()
 
-    def init_get_event(self):
+    def initGetEvent(self):
         today = datetime.datetime.now().date()
         day_ago = today - datetime.timedelta(days=1)
         hand = wevt.OpenEventLog(self.server,self.logtype)
         flags = wevt.EVENTLOG_FORWARDS_READ|wevt.EVENTLOG_SEQUENTIAL_READ
 
         # Init eventlog file
-        f = open(self.filename, 'w', encoding='UTF8')
+        f = open(self.eventfilename, 'w', encoding='UTF8')
         f.close()
+
+        # Init drain file
+        with open(self.drainfilename, 'w', encoding='UTF8') as f:
+            f.close()
 
         while True:
             events = wevt.ReadEventLog(hand, flags, 0)
             if len(events) == 0:
                 break
             if events:
-                f = open(self.filename, 'a', encoding='UTF8')
+                f = open(self.eventfilename, 'a', encoding='UTF8')
                 for evt in events:
                     if str(evt.TimeGenerated)[:10] == str(today):
                         # print('Event Category:', evt.EventCategory)
@@ -64,7 +69,13 @@ class WindowsEventHandler():
 
         flags = wevt.EVENTLOG_BACKWARDS_READ|wevt.EVENTLOG_SEQUENTIAL_READ
         self.current_total = wevt.GetNumberOfEventLogRecords(hand)
-        self.drain_handler = DrainHandler(self.filename)
+
+        self.drain_handler = DrainHandler(self.drainfilename)
+        with open(self.eventfilename, 'rt', encoding='UTF8') as f:
+            for line in f.readlines():
+                self.drain_handler.handle(line)
+            self.drain_handler.report()
+
 
     def run(self):
         while True:
@@ -78,7 +89,7 @@ class WindowsEventHandler():
 
                 events = wevt.ReadEventLog(hand, flags, 0, newtotal - self.current_total)
                 if events:
-                    f = open(self.filename, 'a', encoding='UTF8')
+                    f = open(self.eventfilename, 'a', encoding='UTF8')
                     for evt in events:
                         if str(evt.TimeGenerated)[:10] == str(today):
                             # print('Event Category:', evt.EventCategory)

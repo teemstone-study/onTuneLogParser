@@ -12,15 +12,15 @@ def main():
     managerPath = os.environ.get('ManagerPath')
 
     if logPath:
-        filecheckThread = threading.Thread(target=logCheck, args=(logPath,))
+        filecheckThread = threading.Thread(target=logCheck, args=(logPath, "sksktest"))
         filecheckThread.start()
 
     if viewerPath:
-        viewerCheckThread = threading.Thread(target=logCheck, args=(logPath,))
+        viewerCheckThread = threading.Thread(target=logCheck, args=(viewerPath, "viewer"))
         viewerCheckThread.start()
 
     if managerPath:
-        managerCheckThread = threading.Thread(target=logCheck, args=(logPath,))
+        managerCheckThread = threading.Thread(target=logCheck, args=(managerPath, "manager"))
         managerCheckThread.start()
 
     if platform.system() == 'Windows':
