@@ -11,16 +11,18 @@ class Handler(FileSystemEventHandler):
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
         self.file_prefix = prefix
         self.target_directory = path
-        self.dir_eventfilename = f"{self.file_fullpath}\\..\\result\\{self.file_prefix}_dir_event.txt"
+        self.dir_eventfilename = f"{self.file_fullpath}\\..\\output\\result\\{self.file_prefix}_dir_event.txt"
 
     def setInitCurrentFiletypes(self):
         self.current_file_types = dict()
 
         filelists = os.listdir(self.target_directory)
-        print(filelists)
+        #print(filelists)
         filelists.sort()
 
         for file in filelists:
+            #targetfilename = f"{self.target_directory}\\{file}"
+            #with open(self.dir_eventfilename, 'a') as f:
             self.setCurrentFiletypes(file)
 
     def setCurrentFiletypes(self, file):
@@ -36,7 +38,7 @@ class Handler(FileSystemEventHandler):
         return f"{m.group(1) if m else fname}_{ext[1:]}"
 
     def getDrainFileNames(self, filekey):
-        return f"{self.file_fullpath}\\..\\result\\{self.file_prefix}_{filekey}_drain.txt"
+        return f"{self.file_fullpath}\\..\\output\\result\\{self.file_prefix}_{filekey}_drain.txt"
     
     def initGetEvent(self):
         # Init drain file
@@ -108,6 +110,8 @@ class Handler(FileSystemEventHandler):
                 f.writelines(f"파일 수정 : {event.src_path}")                
                 self.setInitCurrentFiletypes()
 
+        self.initGetEvent()
+
 class Watcher:
     # 생성자
     def __init__(self, path, prefix):
@@ -143,6 +147,7 @@ class Watcher:
             self.observer.stop() # 감시 중단
 
 def logCheck(logPath, prefix):
+    print(prefix + '  ' + logPath + 'Create Thread')
     myWatcher = Watcher(logPath, prefix)
     myWatcher.run()
 

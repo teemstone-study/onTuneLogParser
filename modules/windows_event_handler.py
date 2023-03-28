@@ -9,8 +9,9 @@ class WindowsEventHandler():
         self.logtype = 'System'
 
         file_fullpath = os.path.dirname(os.path.abspath(__file__))
-        self.eventfilename = file_fullpath + "\\..\\windows_event_log\\eventlog.txt"
-        self.drainfilename = file_fullpath + "\\..\\result\\eventlog_drain.txt"
+        self.eventfilename = file_fullpath + "\\..\\output\\windows_event_log\\eventlog.txt"
+        self.drainfilename = file_fullpath + "\\..\\output\\result\\eventlog_drain.txt"
+        
         #current_locale = os.popen('systeminfo | findstr /B /C:"System Locale"').read()
         #current_locale = locale.getlocale(locale.LC_CTYPE)
         #total = wevt.GetNumberOfEventLogRecords(hand)
@@ -32,6 +33,7 @@ class WindowsEventHandler():
         with open(self.drainfilename, 'w', encoding='UTF8') as f:
             f.close()
 
+        self.drain_handler = DrainHandler(self.drainfilename)
         while True:
             events = wevt.ReadEventLog(hand, flags, 0)
             if len(events) == 0:
@@ -57,7 +59,7 @@ class WindowsEventHandler():
                                 
                         logstring = f"[{evt.TimeGenerated}] [{evt.EventCategory}][{evt.SourceName}] [{idResult}] [{evt.EventType}]  [{eventdata}]"  
                         f.write(logstring + "\n")
-                            
+                        self.drain_handler.handle(logstring)    
                         # if data:
                         #     print('Event Data:')
                         #     for msg in data:
@@ -69,12 +71,12 @@ class WindowsEventHandler():
 
         flags = wevt.EVENTLOG_BACKWARDS_READ|wevt.EVENTLOG_SEQUENTIAL_READ
         self.current_total = wevt.GetNumberOfEventLogRecords(hand)
-
-        self.drain_handler = DrainHandler(self.drainfilename)
-        with open(self.eventfilename, 'rt', encoding='UTF8') as f:
-            for line in f.readlines():
-                self.drain_handler.handle(line)
-            self.drain_handler.report()
+        self.drain_handler.report()
+        
+       # with open(self.eventfilename, 'rt', encoding='UTF8') as f:
+       #     for line in f.readlines():
+       #         self.drain_handler.handle(line)
+       #     self.drain_handler.report()
 
 
     def run(self):

@@ -1,0 +1,10 @@
+CheckPath:
+  - fileData: 
+    - name: 'onTune'
+      path: 'C:\\sksktest'
+  #- fileData: 
+  #  - name: 'onTune2'
+  #    path: 'C:\\sksktest2'
+  #- fileData: 
+  #  - name: 'onTune3'
+  #    path: 'C:\\sksktest3'

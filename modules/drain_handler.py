@@ -4,16 +4,22 @@ import json
 from os.path import dirname
 from drain3 import TemplateMiner
 from drain3.template_miner_config import TemplateMinerConfig
+from drain3.file_persistence import FilePersistence
+
+persistence_type = "FILE"
 
 class DrainHandler:
     def __init__(self, drainfilename):
         self.config_file_name = dirname(__file__) + "\\..\\drain3.ini"
         self.drain_file_name = drainfilename
 
+        persistence = FilePersistence("drain3_state.bin")
+
         config = TemplateMinerConfig()
         config.load(self.config_file_name)
         config.profiling_enabled = True
-        self.template_miner = TemplateMiner(config=config)
+        #persistence 값을 넣어줘야 snapshot 기능을 사용할 수 있다.
+        self.template_miner = TemplateMiner(persistence, config)
         self.line_count = 0
 
         self.start_time = time.time()
@@ -23,9 +29,11 @@ class DrainHandler:
     def handle(self, line):
         line = line.rstrip()
         result = self.template_miner.add_log_message(line)
+        #print(line + '  Count : ' + str(result['cluster_size']))
         self.line_count += 1
 
         with open(self.drain_file_name, 'a', encoding='UTF8') as f:
+            
             if self.line_count % self.batch_size == 0:
                 time_took = time.time() - self.batch_start_time
                 rate = self.batch_size / time_took
