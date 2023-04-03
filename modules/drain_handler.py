@@ -1,6 +1,7 @@
 import time
 import sys
 import json
+import os
 from os.path import dirname
 from drain3 import TemplateMiner
 from drain3.template_miner_config import TemplateMinerConfig
@@ -13,7 +14,8 @@ class DrainHandler:
         self.config_file_name = dirname(__file__) + "\\..\\drain3.ini"
         self.drain_file_name = drainfilename
 
-        persistence = FilePersistence("drain3_state.bin")
+        self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
+        persistence = FilePersistence(f"{self.file_fullpath}\\..\\output\\result\\{self.drain_file_name}")
 
         config = TemplateMinerConfig()
         config.load(self.config_file_name)
@@ -26,7 +28,7 @@ class DrainHandler:
         self.batch_start_time = time.time()
         self.batch_size = 10000
 
-    def handle(self, line):
+    def training(self, line):
         line = line.rstrip()
         result = self.template_miner.add_log_message(line)
         #print(line + '  Count : ' + str(result['cluster_size']))
@@ -46,6 +48,9 @@ class DrainHandler:
                 f.writelines(f"Result: {result_json}")
 
             f.close()
+
+    def inference(self, line):
+        print(line)
 
     def report(self):
         time_took = time.time() - self.start_time

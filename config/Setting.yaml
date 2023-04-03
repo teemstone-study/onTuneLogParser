@@ -1,10 +1,24 @@
-CheckPath:
-  - fileData: 
-    - name: 'onTune'
-      path: 'C:\\sksktest'
-  #- fileData: 
-  #  - name: 'onTune2'
-  #    path: 'C:\\sksktest2'
-  #- fileData: 
-  #  - name: 'onTune3'
-  #    path: 'C:\\sksktest3'
+data:
+  - monitoring:
+      directory: 'C:\\sksktest'
+      pattern: none
+      file: sksktest
+      extension: txt
+    interval: 1
+    name: onTune
+    type: normal
+    initial-training: true
+    snapshot-file: sksktest.bin
+    mode: training
+    
+  - monitoring:
+      directory: 'windows_event_log'
+      pattern: none
+      file: eventlog
+      extension: txt
+    interval: 1
+    name: windows-event
+    type: windows-event
+    initial-training: true
+    snapshot-file: windows-event.bin
+    mode: training
