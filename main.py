@@ -31,18 +31,16 @@ def main():
 
     # Dir Check Thread Create
     checkThreads = [] # 추후 헬스체크등을 위해 좀 관리해둘 필요가 있을 것으로 생각됨...방식은 아직 미정...
-    for item in _config['CheckPath']:
-        for data in item["fileData"]:
-            name = data["name"]
-            dirpath = data["path"]
-            if name and dirpath:
-                filecheckThread = threading.Thread(target=logCheck, args=(dirpath, name))
+    for item in _config['data']:
+        if "monitoring" in item and "file" in item["monitoring"]:
+            if "type" not in item or item["type"] == "normal":
+                filecheckThread = threading.Thread(target=logCheck, args=(item,))
                 filecheckThread.start()
                 checkThreads.append(filecheckThread)
-
-    if platform.system() == 'Windows':
-        winEventLogThread = threading.Thread(target=windows_event_log_check)
-        winEventLogThread.start()
+            elif item["type"] == "windows-event" and platform.system() == 'Windows':
+                winEventLogThread = threading.Thread(target=windows_event_log_check, args=(item,))
+                winEventLogThread.start()
+                checkThreads.append(winEventLogThread)
 
 if __name__ == "__main__":
     main()

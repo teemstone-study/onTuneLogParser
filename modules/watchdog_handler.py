@@ -1,153 +1,118 @@
 import time
-import os 
+import os
 import re
-import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from modules.drain_handler import DrainHandler
 
 class Handler(FileSystemEventHandler):
-    def setInitFileSetting(self, path, prefix):
+    def __init__(self, config):
+        monitoring = config['monitoring']       # monitoring 변수 여부는 main에서 check하므로 if 문 생략
+        self.monitoring_directory = monitoring['directory'] if 'directory' in monitoring else '.\\'
+        self.monitoring_pattern = monitoring['pattern'] if 'pattern' in monitoring else 'none'
+        self.monitoring_file = monitoring['file']   # file 변수 여부믐 main에서 check하므로 if 문 생략
+        self.monitoring_extension = monitoring['extension'] if 'extension' in monitoring else 'log'
+        self.monitoring_filename = None
+
+        self.name = config['name'] if 'name' in config else ''
+        self.mode = config['mode'] if 'mode' in config else 'training'
+        self.snapshot_file = config['snapshot-file'] if 'snapshot-file' in config else self.monitoring_file
+        self.initial_training = config['initial-training'] if 'initial-training' in config else False
+
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
-        self.file_prefix = prefix
-        self.target_directory = path
-        self.dir_eventfilename = f"{self.file_fullpath}\\..\\output\\result\\{self.file_prefix}_dir_event.txt"
+        self.initialCheck()
 
-    def setInitCurrentFiletypes(self):
-        self.current_file_types = dict()
-
-        filelists = os.listdir(self.target_directory)
-        #print(filelists)
+    def initialCheck(self):
+        filelists = os.listdir(self.monitoring_directory)
         filelists.sort()
 
         for file in filelists:
-            #targetfilename = f"{self.target_directory}\\{file}"
-            #with open(self.dir_eventfilename, 'a') as f:
-            self.setCurrentFiletypes(file)
+            if self.logFileTypeCheck(file):
+                self.monitoring_filename = file
 
-    def setCurrentFiletypes(self, file):
-        Fname, Extension = os.path.splitext(os.path.basename(file))
-        if Extension in ('.txt','.log'):
-            filekey = self.logFileTypeCheck(Fname, Extension)
-            self.current_file_types[filekey] = file if filekey not in self.current_file_types else self.current_file_types[filekey]
+                if self.initial_training:
+                    self.drainTraining()
 
-    def logFileTypeCheck(self, fname, ext):
-        p = re.compile('(\w+)_(\d+)\.(txt|log)')
-        m = p.match(f"{fname}{ext}")
+    def intervalCheck(self):
+        if self.monitoring_filename:
+            if self.mode == 'training':
+                self.drainTraining()
+            elif self.mode == 'inference':
+                self.drainInference()
 
-        return f"{m.group(1) if m else fname}_{ext[1:]}"
+    def logFileTypeCheck(self, file):
+        if self.monitoring_pattern == 'none':
+            return True if file == f"{self.monitoring_file}.{self.monitoring_extension}" else False
+        elif self.monitoring_pattern == 'day':
+            p = re.compile(f"{self.monitoring_file}_(\d{6})[0]*\.{self.monitoring_extension}")
+            return True if p.match(file) else False
+        elif self.monitoring_pattern == 'hour':
+            p = re.compile(f"{self.monitoring_file}_(\d{8})\.{self.monitoring_extension}")
+            return True if p.match(file) else False
+        elif self.monitoring_pattern == 'minute':
+            p = re.compile(f"{self.monitoring_file}_(\d{10})\.{self.monitoring_extension}")
+            return True if p.match(file) else False
 
-    def getDrainFileNames(self, filekey):
-        return f"{self.file_fullpath}\\..\\output\\result\\{self.file_prefix}_{filekey}_drain.txt"
-    
-    def initGetEvent(self):
-        # Init drain file
-        for filekey in self.current_file_types:
-            drainfilename = self.getDrainFileNames(filekey)                
-            f = open(drainfilename, 'w', encoding='UTF8')
-            f.close()   
+    def drainTraining(self):
+        self.drain_handler = DrainHandler(self.snapshot_file)
 
-        filelists = os.listdir(self.target_directory)
-        filelists.sort()
+        try:
+            with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
+                for line in f:
+                    self.drain_handler.training(line)
+        except:
+            # ANSI 인코딩으로 인한 에러 발생시
+            with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
+                for line in f:
+                    self.drain_handler.training(line)
 
-        self.drain_handler = dict()
-
-        for file in filelists:
-            Fname, Extension = os.path.splitext(os.path.basename(file))
-            if Extension in ('.txt','.log'):
-                filekey = self.logFileTypeCheck(Fname, Extension)
-                drainfilename = self.getDrainFileNames(filekey)
-
-                self.drain_handler[filekey] = DrainHandler(drainfilename)
-                targetfilename = f"{self.target_directory}\\{file}"
-
-                try:
-                    with open(targetfilename, 'rt', encoding='UTF8') as f:
-                        for line in f.readlines():
-                            self.drain_handler[filekey].handle(line)
-                        self.drain_handler[filekey].report()
-                except:
-                    # ANSI 인코딩으로 인한 에러 발생시
-                    with open(targetfilename, 'rt', encoding='ANSI') as f:
-                        for line in f.readlines():
-                            self.drain_handler[filekey].handle(line)
-                        self.drain_handler[filekey].report()
-
+    def drainInference(self):
+        pass
 
     def on_created(self, event): # 파일 생성시
-        with open(self.dir_eventfilename, 'a') as f:
-            f.writelines(f'event type : {event.event_type}')
-            if event.is_directory:
-                f.writelines(f"디렉토리 생성 : {event.src_path}")
-            else: 
-                f.writelines(f"파일 생성 : {event.src_path}")
-                self.setCurrentFiletypes(event.src_path)
-
-    def on_deleted(self, event):
-        with open(self.dir_eventfilename, 'a') as f:
-            f.writelines(f'event type : {event.event_type}')
-            if event.is_directory:
-                f.writelines(f"디렉토리 삭제 : {event.src_path}")
-            else:
-                f.writelines(f"파일 삭제 : {event.src_path}")
-                self.setInitCurrentFiletypes()
-
-    def on_moved(self, event): # 파일 이동시
-        with open(self.dir_eventfilename, 'a') as f:
-            f.writelines(f'event type : {event.event_type}')
-            if event.is_directory:
-                f.writelines(f"디렉토리 이동 : {event.src_path} -> {event.dest_path}")
-            else:
-                f.writelines(f"파일 이동 : {event.src_path} -> {event.dest_path}")
-                self.setInitCurrentFiletypes()
+        print(f'event type : {event.event_type}')
+        if event.is_directory:
+            print(f"디렉토리 생성 : {event.src_path}")
+        else:
+            print(f"파일 생성 : {event.src_path}")
+            if self.logFileTypeCheck(event.src_path):
+                self.monitoring_filename = event.src_path
 
     def on_modified(self, event):
-        with open(self.dir_eventfilename, 'a') as f:
-            f.writelines(f'event type : {event.event_type}')
-            if event.is_directory:
-                f.writelines(f"디렉토리 수정 : {event.src_path}")
-            else:
-                f.writelines(f"파일 수정 : {event.src_path}")                
-                self.setInitCurrentFiletypes()
-
-        self.initGetEvent()
+        print(f'event type : {event.event_type}')
+        if event.is_directory:
+            print(f"디렉토리 수정 : {event.src_path}")
+        else:
+            print(f"파일 수정 : {event.src_path}")            
 
 class Watcher:
     # 생성자
-    def __init__(self, path, prefix):
-        print ("감시 중 ...\n")
+    def __init__(self, config):
         self.event_handler = None      # Handler
         self.observer = Observer()     # Observer 객체 생성
-        self.target_directory = path   # 감시대상 경로
-        self.currentDirectorySetting() # instance method 호출 func(1)
+        self.interval = config['interval'] if 'interval' in config else 1
+        self.event_handler = Handler(config) # 이벤트 핸들러 객체 생성
 
-        self.event_handler = Handler() # 이벤트 핸들러 객체 생성
-        self.event_handler.setInitFileSetting(path, prefix)
-        self.event_handler.setInitCurrentFiletypes()
-        self.event_handler.initGetEvent()
-
-    # func (1) 현재 작업 디렉토리
-    def currentDirectorySetting(self):
-        os.chdir(self.target_directory)
-        print (f"=== 현재 작업 디렉토리: {os.getcwd()}\n")
+        monitoring = config['monitoring']       # monitoring 변수 여부는 main에서 check하므로 if 문 생략
+        self.monitoring_directory = monitoring['directory'] if 'directory' in monitoring else '.\\'
 
     # func (2)
     def run(self):
         self.observer.schedule(
             self.event_handler,
-            self.target_directory,
+            self.monitoring_directory,
             recursive=False
         )
         self.observer.start() # 감시 시작
         try:
             while True: # 무한 루프
-                time.sleep(1) # 1초 마다 대상 디렉토리 감시
+                self.event_handler.intervalCheck()
+                time.sleep(self.interval) # 1초 마다 대상 디렉토리 감시
         except KeyboardInterrupt as e: # 사용자에 의해 "ctrl + z" 발생시
             print ("감시 중지...\n")
             self.observer.stop() # 감시 중단
 
-def logCheck(logPath, prefix):
-    print(prefix + '  ' + logPath + 'Create Thread')
-    myWatcher = Watcher(logPath, prefix)
+def logCheck(config):
+    myWatcher = Watcher(config)
     myWatcher.run()
 
