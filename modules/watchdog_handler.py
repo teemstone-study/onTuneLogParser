@@ -75,7 +75,7 @@ class Handler(FileSystemEventHandler):
             print(f"디렉토리 생성 : {event.src_path}")
         else:
             print(f"파일 생성 : {event.src_path}")
-            if self.logFileTypeCheck(event.src_path):
+            if self.logFileTypeCheck(os.path.basename(event.src_path)):
                 self.monitoring_filename = event.src_path
 
     def on_modified(self, event):
