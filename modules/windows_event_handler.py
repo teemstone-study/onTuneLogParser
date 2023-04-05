@@ -45,7 +45,7 @@ class WindowsEventHandler():
         hand = wevt.OpenEventLog(self.server,self.logtype)
         flags = wevt.EVENTLOG_FORWARDS_READ|wevt.EVENTLOG_SEQUENTIAL_READ
 
-        self.drain_handler = DrainHandler(self.snapshot_file)
+        self.drain_handler = DrainHandler(self.snapshot_file, self.name)
         while True:
             events = wevt.ReadEventLog(hand, flags, 0)
             if len(events) == 0:

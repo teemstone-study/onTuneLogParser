@@ -1,6 +1,6 @@
 data:
   - monitoring:
-      directory: 'C:\\sksktest'
+      directory: 'C:\sksktest'
       pattern: none
       file: sksktest
       extension: txt
@@ -10,7 +10,19 @@ data:
     initial-training: true
     snapshot-file: sksktest.bin
     mode: training
-    
+
+  - monitoring:
+      directory: 'D:\ontunemanager\log'
+      pattern: day
+      file: ontunelog
+      extension: txt
+    interval: 1
+    name: onTune
+    type: normal
+    initial-training: true
+    snapshot-file: ontunemanager_log.bin
+    mode: training
+
   - monitoring:
       directory: 'windows_event_log'
       pattern: none
