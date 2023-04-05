@@ -49,6 +49,17 @@ class DrainHandler:
 
     def inference(self, line):
         print(line)
+        line = line.rstrip()
+        cluster = self.template_miner.match(line)
+        if cluster != None:
+            template = cluster.get_template()
+            print(f"Matched template #{cluster.cluster_id}: {template}")
+            print("Cluster Size : " + str(cluster.size))
+            paramList = self.template_miner.get_parameter_list(template, line)
+            for param in paramList:
+                print("Param Data : " + param)
+        else:
+            print("Cluster is None  Log : " + line)
 
     def report(self):
         time_took = time.time() - self.start_time

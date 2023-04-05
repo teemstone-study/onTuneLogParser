@@ -67,7 +67,17 @@ class Handler(FileSystemEventHandler):
                     self.drain_handler.training(line)
 
     def drainInference(self):
-        pass
+        self.drain_handler = DrainHandler(self.snapshot_file, self.name, self.monitoring_filename)
+
+        try:
+            with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
+                for line in f:
+                    self.drain_handler.inference(line)
+        except:
+            # ANSI 인코딩으로 인한 에러 발생시
+            with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
+                for line in f:
+                    self.drain_handler.inference(line)
 
     def on_created(self, event): # 파일 생성시
         print(f'event type : {event.event_type}')
