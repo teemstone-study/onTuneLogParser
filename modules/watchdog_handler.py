@@ -28,7 +28,7 @@ class Handler(FileSystemEventHandler):
 
         for file in filelists:
             if self.logFileTypeCheck(file):
-                self.monitoring_filename = file
+                self.monitoring_filename = f"{self.monitoring_directory}\\{file}"
 
                 if self.initial_training:
                     self.drainTraining()
@@ -44,17 +44,17 @@ class Handler(FileSystemEventHandler):
         if self.monitoring_pattern == 'none':
             return True if file == f"{self.monitoring_file}.{self.monitoring_extension}" else False
         elif self.monitoring_pattern == 'day':
-            p = re.compile(f"{self.monitoring_file}_(\d{6})[0]*\.{self.monitoring_extension}")
-            return True if p.match(file) else False
+            regex = r"{}_(\d{{6}})[0]*[.]{}".format(self.monitoring_file, self.monitoring_extension)
+            return True if re.match(regex, file) else False
         elif self.monitoring_pattern == 'hour':
-            p = re.compile(f"{self.monitoring_file}_(\d{8})\.{self.monitoring_extension}")
-            return True if p.match(file) else False
+            regex = r"{}_(\d{{8}})[0]*[.]{}".format(self.monitoring_file, self.monitoring_extension)
+            return True if re.match(regex, file) else False
         elif self.monitoring_pattern == 'minute':
-            p = re.compile(f"{self.monitoring_file}_(\d{10})\.{self.monitoring_extension}")
-            return True if p.match(file) else False
-
+            regex = r"{}_(\d{{10}})[0]*[.]{}".format(self.monitoring_file, self.monitoring_extension)
+            return True if re.match(regex, file) else False
+        
     def drainTraining(self):
-        self.drain_handler = DrainHandler(self.snapshot_file)
+        self.drain_handler = DrainHandler(self.snapshot_file, self.name, self.monitoring_filename)
 
         try:
             with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
