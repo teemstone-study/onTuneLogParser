@@ -5,10 +5,22 @@ data:
       file: ontunelog_230329
       extension: txt
     interval: 1
-    name: onTune
+    name: sksk
     type: normal
     initial-training: true
     snapshot-file: sksktest.bin
+    mode: training
+
+  - monitoring:
+      directory: 'D:\ontunemanager\log2'
+      pattern: day
+      file: ontunelog
+      extension: txt
+    interval: 1
+    name: onTune
+    type: normal
+    initial-training: true
+    snapshot-file: ontunemanager_log.bin
     mode: training
 
   - monitoring:
@@ -19,6 +31,6 @@ data:
     interval: 1
     name: windows-event
     type: windows-event
-    initial-training: true
+    initial-training: false
     snapshot-file: windows-event.bin
     mode: training

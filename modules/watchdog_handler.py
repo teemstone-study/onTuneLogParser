@@ -10,23 +10,27 @@ class Handler(FileSystemEventHandler):
         monitoring = config['monitoring']       # monitoring 변수 여부는 main에서 check하므로 if 문 생략
         self.monitoring_directory = monitoring['directory'] if 'directory' in monitoring else '.\\'
         self.monitoring_pattern = monitoring['pattern'] if 'pattern' in monitoring else 'none'
-        self.monitoring_file = monitoring['file']   # file 변수 여부믐 main에서 check하므로 if 문 생략
+        self.monitoring_file = monitoring['file']   # file 변수 여부는 main에서 check하므로 if 문 생략
         self.monitoring_extension = monitoring['extension'] if 'extension' in monitoring else 'log'
         self.monitoring_filename = None
 
+        self.initial_complete_flag = False
         self.name = config['name'] if 'name' in config else ''
         self.tempname = self.name + '.txt'
         self.mode = config['mode'] if 'mode' in config else 'training'
         self.snapshot_file = config['snapshot-file'] if 'snapshot-file' in config else self.monitoring_file
         self.initial_training = config['initial-training'] if 'initial-training' in config else False
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
+        self.drain_handler = DrainHandler(self.snapshot_file, self.name, self.monitoring_filename, similarity_threshold)
+
+        # self.report = config['report'] if 'report' in config else 'none'
         
         self.last_filename = ''
         self.last_offset = 0
         self.get_lastdata()
-
         
         self.initialCheck()
+        self.initial_complete_flag = True
 
     def initialCheck(self):
         filelists = os.listdir(self.monitoring_directory)
@@ -51,8 +55,11 @@ class Handler(FileSystemEventHandler):
                     if self.initial_training:
                         self.drainTraining()
 
+        if self.report:
+            self.drain_handler.report(self.name)
+
     def intervalCheck(self):
-        if self.monitoring_filename:
+        if self.monitoring_filename and self.initial_complete_flag:
             if self.mode == 'training':
                 self.drainTraining()
             elif self.mode == 'inference':
@@ -136,7 +143,7 @@ class Handler(FileSystemEventHandler):
             print(f"디렉토리 생성 : {event.src_path}")
         else:
             print(f"파일 생성 : {event.src_path}")
-            if self.logFileTypeCheck(event.src_path):
+            if self.logFileTypeCheck(os.path.basename(event.src_path)):
                 self.last_filename = ''
                 self.monitoring_filename = event.src_path
                 self.drain_handler.set_init_offset(0)
