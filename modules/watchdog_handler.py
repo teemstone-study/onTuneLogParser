@@ -15,23 +15,41 @@ class Handler(FileSystemEventHandler):
         self.monitoring_filename = None
 
         self.name = config['name'] if 'name' in config else ''
+        self.tempname = self.name + '.txt'
         self.mode = config['mode'] if 'mode' in config else 'training'
         self.snapshot_file = config['snapshot-file'] if 'snapshot-file' in config else self.monitoring_file
         self.initial_training = config['initial-training'] if 'initial-training' in config else False
-
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
+        
+        self.last_filename = ''
+        self.last_offset = 0
+        self.get_lastdata()
+
+        
         self.initialCheck()
 
     def initialCheck(self):
         filelists = os.listdir(self.monitoring_directory)
         filelists.sort()
+        old_file = True
+        if self.last_filename != '':  
+            for i in range(0,len(filelists)):
+                if filelists[i] == self.last_filename:
+                    old_file = False
 
-        for file in filelists:
-            if self.logFileTypeCheck(file):
-                self.monitoring_filename = f"{self.monitoring_directory}\\{file}"
+                if old_file == False:
+                    if self.logFileTypeCheck(filelists[i]):
+                        self.monitoring_filename = f"{self.monitoring_directory}\\{filelists[i]}"    
 
-                if self.initial_training:
-                    self.drainTraining()
+                        if self.initial_training:
+                            self.drainTraining()
+        else:        
+            for file in filelists:
+                if self.logFileTypeCheck(file):
+                    self.monitoring_filename = f"{self.monitoring_directory}\\{file}"
+
+                    if self.initial_training:
+                        self.drainTraining()
 
     def intervalCheck(self):
         if self.monitoring_filename:
@@ -52,19 +70,52 @@ class Handler(FileSystemEventHandler):
         elif self.monitoring_pattern == 'minute':
             regex = r"{}_(\d{{10}})[0]*[.]{}".format(self.monitoring_file, self.monitoring_extension)
             return True if re.match(regex, file) else False
-        
+
+    def get_lastdata(self):
+        with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'r', encoding='UTF8') as f:
+            string_val = f.readline()
+            if string_val != '':
+                val_list = string_val.split('*')
+                path_list = val_list[0].split('\\')
+                self.last_filename = path_list[len(path_list) - 1]
+                self.last_offset = int(val_list[1])
+            else:
+                self.last_filename = ''
+                self.last_offset = 0
+
     def drainTraining(self):
         self.drain_handler = DrainHandler(self.snapshot_file, self.name, self.monitoring_filename)
-
-        try:
-            with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
-                for line in f:
-                    self.drain_handler.training(line)
-        except:
-            # ANSI 인코딩으로 인한 에러 발생시
-            with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
-                for line in f:
-                    self.drain_handler.training(line)
+        self.drain_handler.set_init_offset(0)
+        if self.last_filename == '':
+            try:
+                with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
+                    for line in f:
+                        self.drain_handler.training(line)
+            except:
+                # ANSI 인코딩으로 인한 에러 발생시
+                with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
+                    for line in f:
+                        self.drain_handler.training(line)    
+        else:
+            try:
+                path_list = self.monitoring_filename.split('\\')
+                self.get_lastdata()
+                if path_list[len(path_list) - 1] == self.last_filename:
+                    self.drain_handler.set_init_offset(self.last_offset)
+                    with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
+                        for line in f.readlines()[self.last_offset:]:
+                            self.get_lastdata()
+                            self.drain_handler.training(line, self.last_offset)
+            except:
+                # ANSI 인코딩으로 인한 에러 발생시
+                with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
+                    path_list = self.monitoring_filename.split('\\')
+                    self.get_lastdata()
+                    if path_list[len(path_list) - 1] == self.last_filename:
+                        self.drain_handler.set_init_offset(self.last_offset)
+                        for line in f.readlines()[self.last_offset:]:
+                            self.get_lastdata()
+                            self.drain_handler.training(line, self.last_offset)
 
     def drainInference(self):
         self.drain_handler = DrainHandler(self.snapshot_file, self.name, self.monitoring_filename)
@@ -86,7 +137,9 @@ class Handler(FileSystemEventHandler):
         else:
             print(f"파일 생성 : {event.src_path}")
             if self.logFileTypeCheck(event.src_path):
+                self.last_filename = ''
                 self.monitoring_filename = event.src_path
+                self.drain_handler.set_init_offset(0)
 
     def on_modified(self, event):
         print(f'event type : {event.event_type}')

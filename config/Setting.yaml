@@ -2,25 +2,13 @@ data:
   - monitoring:
       directory: 'C:\sksktest'
       pattern: none
-      file: sksktest
+      file: ontunelog_230329
       extension: txt
     interval: 1
     name: onTune
     type: normal
     initial-training: true
     snapshot-file: sksktest.bin
-    mode: training
-
-  - monitoring:
-      directory: 'D:\ontunemanager\log'
-      pattern: day
-      file: ontunelog
-      extension: txt
-    interval: 1
-    name: onTune
-    type: normal
-    initial-training: true
-    snapshot-file: ontunemanager_log.bin
     mode: training
 
   - monitoring:
