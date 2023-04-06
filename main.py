@@ -24,6 +24,7 @@ def create_Dir():
     file_fullpath = os.path.dirname(os.path.abspath(__file__))
     createDirectory(file_fullpath + "\\output\\windows_event_log")
     createDirectory(file_fullpath + "\\output\\result")
+    createDirectory(file_fullpath + "\\temp")
 
 def main():
     create_Dir()
