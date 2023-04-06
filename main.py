@@ -40,7 +40,7 @@ def main():
                 checkThreads.append(filecheckThread)
             elif item["type"] == "windows-event" and platform.system() == 'Windows':
                 winEventLogThread = threading.Thread(target=windows_event_log_check, args=(item,))
-                #winEventLogThread.start()
+                winEventLogThread.start()
                 checkThreads.append(winEventLogThread)
 
 if __name__ == "__main__":
