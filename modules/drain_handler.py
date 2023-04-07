@@ -41,10 +41,9 @@ class DrainHandler:
         #   yaml.dump(config, f)
         #self.save_Yaml(config)
 
-    def __init__(self, drainfilename, name, monitoringfilename="", similarity_threshold=0.4):
+    def __init__(self, drainfilename, name, similarity_threshold=0.4):
         self.config_file_name = dirname(__file__) + "\\..\\drain3.ini"
         self.drain_file_name = drainfilename
-        self.monitoring_file_name = monitoringfilename
         self.name = name
         self.tempname = name + '.txt'
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
@@ -65,27 +64,31 @@ class DrainHandler:
     def set_init_offset(self, offset):
         self.line_count = offset
 
-    def training(self, line, offset):
+    def training(self, line, monitoringfilename="", offset=0):
+        self.monitoring_file_name = monitoringfilename
         line = line.rstrip()
         self.line_count = offset
-        matchCluster = self.template_miner.match(line)
-        if not matchCluster:
+        #matchCluster = self.template_miner.match(line)
+        if True:
             result = self.template_miner.add_log_message(re.sub(u'\u0000', '', line))
             self.line_count += 1
 
-            with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'w', encoding='UTF8') as f:
-                f.write(self.monitoring_file_name + '*' + str(self.line_count))
+            try:
+                with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'w', encoding='UTF8') as f:
+                    f.write(self.monitoring_file_name + '*' + str(self.line_count))
 
-            if self.line_count % self.batch_size == 0:
-                time_took = time.time() - self.batch_start_time
-                rate = self.batch_size / time_took
-                print(f"{self.name} {self.monitoring_file_name}- Processing line: {self.line_count}, rate {rate:.1f} lines/sec, "
-                    f"{len(self.template_miner.drain.clusters)} clusters so far.")
-                self.batch_start_time = time.time()
-            if result["change_type"] != "none":
-                result_json = json.dumps(result)
-                print(f"{self.name} {self.monitoring_file_name}- Input ({self.line_count}): {line}")
-                print(f"{self.name} {self.monitoring_file_name}- Result: {result_json}")
+                    if self.line_count % self.batch_size == 0:
+                        time_took = time.time() - self.batch_start_time
+                        rate = self.batch_size / time_took
+                        print(f"{self.name} {self.monitoring_file_name}- Processing line: {self.line_count}, rate {rate:.1f} lines/sec, "
+                            f"{len(self.template_miner.drain.clusters)} clusters so far.")
+                        self.batch_start_time = time.time()
+                    if result["change_type"] != "none":
+                        result_json = json.dumps(result)
+                        print(f"{self.name} {self.monitoring_file_name}- Input ({self.line_count}): {line}")
+                        print(f"{self.name} {self.monitoring_file_name}- Result: {result_json}")
+            except:
+                pass
         else:
             #match의 결과가 있을 경우 parameter를 체크해보자.
             param_list = self.template_miner.get_log_reg_parameter(line)
@@ -98,7 +101,10 @@ class DrainHandler:
             print(param_list)
             print(paramList)
 
-    def inference(self, line):
+        return self.line_count
+
+    def inference(self, line, monitoringfilename=""):
+        self.monitoring_file_name = monitoringfilename
         print(line)
         line = line.rstrip()
         cluster = self.template_miner.match(line)
