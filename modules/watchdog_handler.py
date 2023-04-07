@@ -18,12 +18,9 @@ class Handler(FileSystemEventHandler):
         self.name = config['name'] if 'name' in config else ''
         self.tempname = self.name + '.txt'
         self.mode = config['mode'] if 'mode' in config else 'training'
-        self.snapshot_file = config['snapshot-file'] if 'snapshot-file' in config else self.monitoring_file
         self.initial_training = config['initial-training'] if 'initial-training' in config else False
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
-
-        similarity_threshold = config['similarity-threshold'] if 'similarity-threshold' in config else 0.4
-        self.drain_handler = DrainHandler(self.snapshot_file, self.name, similarity_threshold)
+        self.drain_handler = DrainHandler(config)
 
         self.report = config['report'] if 'report' in config else False
         
@@ -79,7 +76,7 @@ class Handler(FileSystemEventHandler):
 
     def get_lastdata(self):
         try:
-            with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'r', encoding='UTF8') as f:
+            with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'r') as f:
                 string_val = f.readline()
                 if string_val != '':
                     val_list = string_val.split('*')
@@ -112,8 +109,6 @@ class Handler(FileSystemEventHandler):
                     self.last_offset = self.drain_handler.training(line, self.monitoring_filename, self.last_offset)
 
     def drainInference(self):
-        self.drain_handler = DrainHandler(self.snapshot_file, self.name, self.monitoring_filename)
-
         try:
             with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
                 for line in f:
