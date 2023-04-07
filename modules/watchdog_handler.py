@@ -23,7 +23,7 @@ class Handler(FileSystemEventHandler):
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
         self.drain_handler = DrainHandler(self.snapshot_file, self.name, self.monitoring_filename, similarity_threshold)
 
-        # self.report = config['report'] if 'report' in config else 'none'
+        self.report = config['report'] if 'report' in config else 'none'
         
         self.last_filename = ''
         self.last_offset = 0
