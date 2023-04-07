@@ -74,19 +74,21 @@ class DrainHandler:
             self.line_count += 1
 
             try:
-                with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'w', encoding='UTF8') as f:
+                with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'r+', encoding='UTF8') as f:
+                    f.seek(0)
+                    #f.truncate()                    
                     f.write(self.monitoring_file_name + '*' + str(self.line_count))
 
-                    if self.line_count % self.batch_size == 0:
-                        time_took = time.time() - self.batch_start_time
-                        rate = self.batch_size / time_took
-                        print(f"{self.name} {self.monitoring_file_name}- Processing line: {self.line_count}, rate {rate:.1f} lines/sec, "
-                            f"{len(self.template_miner.drain.clusters)} clusters so far.")
-                        self.batch_start_time = time.time()
-                    if result["change_type"] != "none":
-                        result_json = json.dumps(result)
-                        print(f"{self.name} {self.monitoring_file_name}- Input ({self.line_count}): {line}")
-                        print(f"{self.name} {self.monitoring_file_name}- Result: {result_json}")
+                if self.line_count % self.batch_size == 0:
+                    time_took = time.time() - self.batch_start_time
+                    rate = self.batch_size / time_took
+                    print(f"{self.name} {self.monitoring_file_name}- Processing line: {self.line_count}, rate {rate:.1f} lines/sec, "
+                        f"{len(self.template_miner.drain.clusters)} clusters so far.")
+                    self.batch_start_time = time.time()
+                if result["change_type"] != "none":
+                    result_json = json.dumps(result)
+                    print(f"{self.name} {self.monitoring_file_name}- Input ({self.line_count}): {line}")
+                    print(f"{self.name} {self.monitoring_file_name}- Result: {result_json}")
             except:
                 pass
         else:
