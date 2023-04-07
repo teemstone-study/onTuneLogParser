@@ -99,7 +99,7 @@ class Handler(FileSystemEventHandler):
             self.last_offset = 0
         else:
             self.get_lastdata()
-            
+
         self.drain_handler.set_init_offset(self.last_offset)
         try:
             with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
@@ -132,6 +132,7 @@ class Handler(FileSystemEventHandler):
             print(f"파일 생성 : {event.src_path}")
             if self.logFileTypeCheck(os.path.basename(event.src_path)):
                 self.last_filename = ''
+                self.last_offset = 0
                 self.monitoring_filename = event.src_path
                 self.drain_handler.set_init_offset(0)
 
