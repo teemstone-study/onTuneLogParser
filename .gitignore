@@ -2,3 +2,6 @@
 windows_event_log/
 result/
 **/__pycache__/
+.log
+**/*.log
+temp/
