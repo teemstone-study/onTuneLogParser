@@ -23,7 +23,7 @@ class DrainHandler:
 
     def set_lastdata(self):
         #config = self.load_Yaml()
-
+       
         with open('{self.file_fullpath}\..\config\Setting.yaml', 'r', encoding='UTF-8') as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -41,17 +41,20 @@ class DrainHandler:
         #   yaml.dump(config, f)
         #self.save_Yaml(config)
 
-    def __init__(self, drainfilename, name, similarity_threshold=0.4):
+    def __init__(self, config):
+        self.name = config['name'] if 'name' in config else ''
+        self.drain_file_name = config['snapshot-file'] if 'snapshot-file' in config else self.monitoring_file
+        self.similarity_threshold = config['similarity-threshold'] if 'similarity-threshold' in config else 0.4
+        self.duplicate_allow_count = config['duplicate-allow-count'] if 'duplicate-allow-count' in config else 1000
+
         self.config_file_name = dirname(__file__) + "\\..\\drain3.ini"
-        self.drain_file_name = drainfilename
-        self.name = name
-        self.tempname = name + '.txt'
+        self.tempname = self.name + '.txt'
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
         persistence = FilePersistence(f"{self.file_fullpath}\\..\\output\\result\\{self.drain_file_name}")
 
         config = TemplateMinerConfig()
         config.load(self.config_file_name)
-        config.drain_sim_th = similarity_threshold  # Override
+        config.drain_sim_th = self.similarity_threshold  # Override
         config.profiling_enabled = True
 
         self.template_miner = TemplateMiner(persistence, config)
@@ -71,26 +74,27 @@ class DrainHandler:
         #matchCluster = self.template_miner.match(line)
         if True:
             result = self.template_miner.add_log_message(re.sub(u'\u0000', '', line))
+
+            if self.line_count % self.duplicate_allow_count == 0:
+                try:
+                    with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'w') as f:
+                        f.write(self.monitoring_file_name + '*' + str(self.line_count))
+                except:
+                    pass
+
             self.line_count += 1
+            
+            if self.line_count % self.batch_size == 0:
+                time_took = time.time() - self.batch_start_time
+                rate = self.batch_size / time_took
+                print(f"{self.name} {self.monitoring_file_name}- Processing line: {self.line_count}, rate {rate:.1f} lines/sec, "
+                    f"{len(self.template_miner.drain.clusters)} clusters so far.")
+                self.batch_start_time = time.time()
+            if result["change_type"] != "none":
+                result_json = json.dumps(result)
+                print(f"{self.name} {self.monitoring_file_name}- Input ({self.line_count}): {line}")
+                print(f"{self.name} {self.monitoring_file_name}- Result: {result_json}")
 
-            try:
-                with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'r+', encoding='UTF8') as f:
-                    f.seek(0)
-                    #f.truncate()                    
-                    f.write(self.monitoring_file_name + '*' + str(self.line_count))
-
-                if self.line_count % self.batch_size == 0:
-                    time_took = time.time() - self.batch_start_time
-                    rate = self.batch_size / time_took
-                    print(f"{self.name} {self.monitoring_file_name}- Processing line: {self.line_count}, rate {rate:.1f} lines/sec, "
-                        f"{len(self.template_miner.drain.clusters)} clusters so far.")
-                    self.batch_start_time = time.time()
-                if result["change_type"] != "none":
-                    result_json = json.dumps(result)
-                    print(f"{self.name} {self.monitoring_file_name}- Input ({self.line_count}): {line}")
-                    print(f"{self.name} {self.monitoring_file_name}- Result: {result_json}")
-            except:
-                pass
         else:
             #match의 결과가 있을 경우 parameter를 체크해보자.
             param_list = self.template_miner.get_log_reg_parameter(line)
