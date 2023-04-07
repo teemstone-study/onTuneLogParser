@@ -102,6 +102,6 @@ data:
     interval: 1
     name: windows-event
     type: windows-event
-    initial-training: false
+    initial-training: true
     snapshot-file: windows-event.bin
     mode: training

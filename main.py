@@ -3,6 +3,7 @@ import threading
 import os 
 import yaml
 from dotenv import load_dotenv
+from multiprocessing.dummy import Pool as ThreadPool
 from modules.watchdog_handler import logCheck
 from modules.windows_event_handler import windows_event_log_check
 
@@ -26,22 +27,29 @@ def create_Dir():
     createDirectory(file_fullpath + "\\output\\result")
     createDirectory(file_fullpath + "\\temp")
 
+def working(work):
+    if "monitoring" in work and "file" in work["monitoring"]:
+        if "type" not in work or work["type"] == "normal":
+            logCheck(work)
+        elif work["type"] == "windows-event" and platform.system() == 'Windows':
+            windows_event_log_check(work)
+
+def workThread(worklist, threadnum=1):
+    pool = ThreadPool(threadnum)
+    result = pool.map(working, worklist)
+    pool.close()
+    pool.join()
+
+    return result
+
 def main():
     create_Dir()
     _config = load_Yaml()
 
     # Dir Check Thread Create
-    checkThreads = [] # 추후 헬스체크등을 위해 좀 관리해둘 필요가 있을 것으로 생각됨...방식은 아직 미정...
-    for item in _config['data']:
-        if "monitoring" in item and "file" in item["monitoring"]:
-            if "type" not in item or item["type"] == "normal":
-                filecheckThread = threading.Thread(target=logCheck, args=(item,))
-                filecheckThread.start()
-                checkThreads.append(filecheckThread)
-            elif item["type"] == "windows-event" and platform.system() == 'Windows':
-                winEventLogThread = threading.Thread(target=windows_event_log_check, args=(item,))
-                winEventLogThread.start()
-                checkThreads.append(winEventLogThread)
+    data = _config['data']
+    result = workThread(data, len(data))
+    print(result)
 
 if __name__ == "__main__":
     main()
