@@ -76,6 +76,9 @@ class Handler(FileSystemEventHandler):
         elif self.monitoring_pattern == 'minute':
             regex = r"{}_(\d{{10}})[0]*[.]{}".format(self.monitoring_file, self.monitoring_extension)
             return True if re.match(regex, file) else False
+        else:
+            regex = r"{}{}[.]{}".format(self.monitoring_file, self.monitoring_pattern, self.monitoring_extension)
+            return True if re.match(regex, file) else False
 
     def get_lastdata(self):
         try:

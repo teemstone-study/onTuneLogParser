@@ -71,9 +71,13 @@ class DrainHandler:
         self.monitoring_file_name = monitoringfilename
         line = line.rstrip()
         self.line_count = offset
+        filtered_line = re.sub(u'\u0000', '', line)
+        if filtered_line == "":
+            return self.line_count
+        
         #matchCluster = self.template_miner.match(line)
         if True:
-            result = self.template_miner.add_log_message(re.sub(u'\u0000', '', line))
+            result = self.template_miner.add_log_message(filtered_line)
 
             if self.line_count % self.duplicate_allow_count == 0:
                 try:
