@@ -1,95 +1,82 @@
 data:
   - monitoring:
-      directory: 'C:\sksktest'
-      pattern: none
-      file: ontunelog_230329
-      extension: txt
+      directory: 'D:\logs\jeju_ontune\pgsql_log'
+      pattern: '[0-9]{4}\-[0-9]{2}-[0-9]{2}_[0-9]{6}'
+      file: postgresql-
+      extension: log
     interval: 1
-    name: sksk
+    name: jeju_pg
     type: normal
     initial-training: false
-    snapshot-file: sksktest.bin
+    snapshot-file: jeju_postgresql.bin
     mode: training
 
   - monitoring:
-      directory: 'D:\ontunemanager\log2'
+      directory: 'D:\logs\jeju_ontune\onTune_log'
       pattern: day
       file: ontunelog
       extension: txt
     interval: 1
-    name: onTune
+    name: jeju_onTune
     type: normal
     initial-training: false
-    snapshot-file: ontunemanager_log.bin
+    snapshot-file: jeju_ontunemanager_log.bin
     mode: training
     report: false
+    similarity-threshold: 0.3
 
   - monitoring:
-      directory: 'D:\logs'
+      directory: 'D:\logs\jeju_ontune\onTuneEvent_log'
       pattern: day
       file: ontuneeventlog
       extension: txt
     interval: 10
-    name: onTuneEvent
+    name: jeju_onTuneEvent
     type: normal
     initial-training: false
-    snapshot-file: ontuneevent_log.bin
+    snapshot-file: jeju_ontuneevent_log.bin
     mode: training
     report: false
     similarity-threshold: 0.84
 
   - monitoring:
-      directory: 'D:\logs'
+      directory: 'D:\logs\jeju_ontune\onTuneEvent_log'
       pattern: day
       file: ontuneeventstatuslog
       extension: txt
     interval: 10
-    name: onTuneEventStatus
+    name: jeju_onTuneEventStatus
     type: normal
     initial-training: true
-    snapshot-file: ontuneevent_status_log.bin
+    snapshot-file: jeju_ontuneevent_status_log.bin
     mode: training
     report: true
     similarity-threshold: 0.84
 
   - monitoring:
-      directory: 'D:\logs'
-      pattern: day
-      file: PingLog
-      extension: txt
-    interval: 10
-    name: onTuneEventPing
-    type: normal
-    initial-training: false
-    snapshot-file: ontuneevent_ping_log.bin
-    mode: training
-    report: false
-    similarity-threshold: 0.84
-
-  - monitoring:
-      directory: 'D:\logs'
-      pattern: day
-      file: PortScanLog
-      extension: txt
-    interval: 10
-    name: onTuneEventPortScan
-    type: normal
-    initial-training: false
-    snapshot-file: ontuneevent_portscan_log.bin
-    mode: training
-    report: false
-    similarity-threshold: 0.84
-
-  - monitoring:
-      directory: 'D:\logs'
+      directory: 'D:\logs\jeju_ontune\onTuneEvent_log'
       pattern: none
       file: notification_sms_log_0
       extension: txt
     interval: 10
-    name: onTuneEventNoti
+    name: jeju_onTuneEventNoti
     type: normal
     initial-training: false
-    snapshot-file: ontuneevent_noti_log.bin
+    snapshot-file: jeju_ontuneevent_noti_log.bin
+    mode: training
+    report: false
+    similarity-threshold: 0.84
+
+  - monitoring:
+      directory: 'D:\logs\jeju_ontune\onTuneEvent_log'
+      pattern: none
+      file: onTuneEventViewerLog
+      extension: txt
+    interval: 10
+    name: jeju_onTuneEventViewer
+    type: normal
+    initial-training: false
+    snapshot-file: jeju_ontuneevent_viewer_log.bin
     mode: training
     report: false
     similarity-threshold: 0.84
