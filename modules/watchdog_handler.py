@@ -14,6 +14,9 @@ class Handler(FileSystemEventHandler):
         self.monitoring_extension = monitoring['extension'] if 'extension' in monitoring else 'log'
         self.monitoring_filename = None
 
+        self.exception_words = monitoring['exception-words']
+        self.date_time_format = str(monitoring['date-time-format']).strip()
+
         self.initial_complete_flag = False
         self.name = config['name'] if 'name' in config else ''
         self.tempname = self.name + '.txt'
@@ -92,6 +95,31 @@ class Handler(FileSystemEventHandler):
             self.last_filename = ''
             self.last_offset = 0
 
+    def line_check(self, line) -> bool:
+        line_arr = str(line).split(' ')
+        date_time = self.date_time_format.replace('%MSG', '').strip()
+        except_line = str(line)[len(date_time):]
+        for exception_word in self.exception_words:
+            except_line = date_time + ' ' + exception_word
+            masking_index = []
+            except_line_arr = str(except_line).split(' ')
+            if len(line_arr) == len(except_line_arr):
+                if '*' in except_line_arr:
+                    for i in range(0, len(except_line_arr)): 
+                        if except_line_arr[i] == '*':
+                            line_arr[i] = '*'  
+                    if '*' in line_arr:
+                        if except_line_arr == line_arr:
+                            return True  
+                else:
+                    if exception_word not in line:
+                        return True   
+            else:
+                if exception_word not in line:
+                    return True
+                
+        return False    
+
     def drainTraining(self):
         self.drain_handler.set_init_offset(0)
         if os.path.basename(self.monitoring_filename) != self.last_filename:
@@ -104,12 +132,16 @@ class Handler(FileSystemEventHandler):
         try:
             with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
                 for line in f.readlines()[self.last_offset:]:
-                    self.last_offset = self.drain_handler.training(line, self.monitoring_filename, self.last_offset)
+                    is_valid = self.line_check(line)
+                    if is_valid:
+                        self.last_offset = self.drain_handler.training(line, self.monitoring_filename, self.last_offset)
         except:
             # ANSI 인코딩으로 인한 에러 발생시
             with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
                 for line in f.readlines()[self.last_offset:]:
-                    self.last_offset = self.drain_handler.training(line, self.monitoring_filename, self.last_offset)
+                    is_valid = self.line_check(line)
+                    if is_valid:
+                        self.last_offset = self.drain_handler.training(line, self.monitoring_filename, self.last_offset)
 
     def drainInference(self):
         self.drain_handler = DrainHandler(self.snapshot_file, self.name, self.monitoring_filename)

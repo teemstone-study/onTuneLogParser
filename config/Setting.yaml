@@ -2,103 +2,27 @@ data:
   - monitoring:
       directory: 'C:\sksktest'
       pattern: none
-      file: ontunelog_230329
+      file: ontunelog_230330
       extension: txt
+      date-time-format: 'yyyy MM-dd HH-mm-ss %MSG'
+      exception-words:
+        - 'is started'
+        - 'connected database'
+        - 'select *'
     interval: 1
     name: sksk
     type: normal
     initial-training: false
     snapshot-file: sksktest.bin
     mode: training
-
-  - monitoring:
-      directory: 'D:\ontunemanager\log2'
-      pattern: day
-      file: ontunelog
-      extension: txt
-    interval: 1
-    name: onTune
-    type: normal
-    initial-training: false
-    snapshot-file: ontunemanager_log.bin
-    mode: training
-    report: false
-
-  - monitoring:
-      directory: 'D:\logs'
-      pattern: day
-      file: ontuneeventlog
-      extension: txt
-    interval: 10
-    name: onTuneEvent
-    type: normal
-    initial-training: false
-    snapshot-file: ontuneevent_log.bin
-    mode: training
-    report: false
-    similarity-threshold: 0.84
-
-  - monitoring:
-      directory: 'D:\logs'
-      pattern: day
-      file: ontuneeventstatuslog
-      extension: txt
-    interval: 10
-    name: onTuneEventStatus
-    type: normal
-    initial-training: true
-    snapshot-file: ontuneevent_status_log.bin
-    mode: training
-    report: true
-    similarity-threshold: 0.84
-
-  - monitoring:
-      directory: 'D:\logs'
-      pattern: day
-      file: PingLog
-      extension: txt
-    interval: 10
-    name: onTuneEventPing
-    type: normal
-    initial-training: false
-    snapshot-file: ontuneevent_ping_log.bin
-    mode: training
-    report: false
-    similarity-threshold: 0.84
-
-  - monitoring:
-      directory: 'D:\logs'
-      pattern: day
-      file: PortScanLog
-      extension: txt
-    interval: 10
-    name: onTuneEventPortScan
-    type: normal
-    initial-training: false
-    snapshot-file: ontuneevent_portscan_log.bin
-    mode: training
-    report: false
-    similarity-threshold: 0.84
-
-  - monitoring:
-      directory: 'D:\logs'
-      pattern: none
-      file: notification_sms_log_0
-      extension: txt
-    interval: 10
-    name: onTuneEventNoti
-    type: normal
-    initial-training: false
-    snapshot-file: ontuneevent_noti_log.bin
-    mode: training
-    report: false
-    similarity-threshold: 0.84
+    
 
   - monitoring:
       directory: 'windows_event_log'
       pattern: none
       file: eventlog
       extension: txt
+      exception-words:
     interval: 1
     name: windows-event
     type: windows-event
