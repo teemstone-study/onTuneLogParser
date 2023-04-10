@@ -1,14 +1,14 @@
 data:
   - monitoring:
-      directory: 'D:\logs\jeju_ontune\pgsql_log'
-      pattern: '(\d{4})\-(\d{2})-(\d{2})_(\d{6})'
-      file: postgresql-
-      extension: log
+      directory: 'C:\sksktest'
+      pattern: none
+      file: ontunelog_230329
+      extension: txt
     interval: 1
     name: jeju_pg
     type: normal
-    initial-training: true
-    snapshot-file: jeju_postgresql.bin
+    initial-training: false
+    snapshot-file: sksktest.bin
     mode: training
     report: true
     similarity-threshold: 0.1
@@ -21,11 +21,10 @@ data:
     interval: 1
     name: jeju_onTune
     type: normal
-    initial-training: true
-    snapshot-file: jeju_ontunemanager_log.bin
+    initial-training: false
+    snapshot-file: ontunemanager_log.bin
     mode: training
-    report: true
-    similarity-threshold: 0.05
+    report: false
 
   - monitoring:
       directory: 'D:\logs\jeju_ontune\onTuneEvent_log'
@@ -35,8 +34,8 @@ data:
     interval: 10
     name: jeju_onTuneEvent
     type: normal
-    initial-training: true
-    snapshot-file: jeju_ontuneevent_log.bin
+    initial-training: false
+    snapshot-file: ontuneevent_log.bin
     mode: training
     report: true
     similarity-threshold: 0.3
@@ -63,8 +62,8 @@ data:
     interval: 10
     name: jeju_onTuneEventNoti
     type: normal
-    initial-training: true
-    snapshot-file: jeju_ontuneevent_noti_log.bin
+    initial-training: false
+    snapshot-file: ontuneevent_ping_log.bin
     mode: training
     report: true
     similarity-threshold: 0.7
@@ -77,8 +76,8 @@ data:
     interval: 10
     name: jeju_onTuneEventViewer
     type: normal
-    initial-training: true
-    snapshot-file: jeju_ontuneevent_viewer_log.bin
+    initial-training: false
+    snapshot-file: ontuneevent_noti_log.bin
     mode: training
     report: true
     similarity-threshold: 0.6
