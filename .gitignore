@@ -5,3 +5,4 @@ result/
 .log
 **/*.log
 temp/
+config/Setting.yaml
