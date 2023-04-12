@@ -6,3 +6,4 @@ result/
 **/*.log
 temp/
 config/Setting.yaml
+*.bat
