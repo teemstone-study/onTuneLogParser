@@ -47,11 +47,9 @@ class DrainHandler:
     def __init__(self, config):
         self.name = config['name'] if 'name' in config else ''
         self.drain_file_name = config['snapshot-file'] if 'snapshot-file' in config else self.monitoring_file
-        self.duplicate_allow_count = config['duplicate-allow-count'] if 'duplicate-allow-count' in config else 1000
         self.words = config['words'] if 'words' in config else []
 
         self.config_file_name = dirname(__file__) + "\\..\\drain3.ini"
-        self.tempname = self.name + '.txt'
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
         persistence = FilePersistence(f"{self.file_fullpath}\\..\\output\\result\\{self.drain_file_name}")
 
@@ -108,12 +106,12 @@ class DrainHandler:
         if True:
             result = self.template_miner.add_log_message(filtered_line)
 
-            if self.line_count % self.duplicate_allow_count == 0:
-                try:
-                    with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'w') as f:
-                        f.write(self.monitoring_file_name + '*' + str(self.line_count))
-                except:
-                    pass
+            # if self.line_count % self.duplicate_allow_count == 0:
+            #     try:
+            #         with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'w') as f:
+            #             f.write(self.monitoring_file_name + '*' + str(self.line_count))
+            #     except:
+            #         pass
 
             self.line_count += 1
             

@@ -25,6 +25,8 @@ class Handler(FileSystemEventHandler):
         self.drain_handler = DrainHandler(config)
 
         self.report = config['report'] if 'report' in config else False
+        self.duplicate_allow_count = config['duplicate-allow-count'] if 'duplicate-allow-count' in config else 500
+        self.tempname = self.name + '.txt'
         
         self.get_lastdata()
         self.initialCheck()
@@ -132,12 +134,30 @@ class Handler(FileSystemEventHandler):
         try:
             with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
                 for line in f.readlines()[self.last_offset:]:
+                    if self.last_offset % self.duplicate_allow_count == 0:
+                        try:
+                            with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'a') as f2:
+                                f2.seek(0,0)
+                                f2.truncate(0)
+                                f2.write(self.monitoring_filename + '*' + str(self.last_offset))
+                        except:
+                            pass
+                                            
                     line_data = self.removeTimestamp(line, self.date_time_format)
-                    self.last_offset = self.drain_handler.training(line_data, self.monitoring_filename, self.last_offset)
+                    self.last_offset = self.drain_handler.training(line_data, self.monitoring_filename, self.last_offset)                    
         except:
             # ANSI 인코딩으로 인한 에러 발생시
             with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
                 for line in f.readlines()[self.last_offset:]:
+                    if self.last_offset % self.duplicate_allow_count == 0:
+                        try:
+                            with open(f'{self.file_fullpath}\\..\\temp\\{self.tempname}', 'a') as f2:
+                                f2.seek(0,0)
+                                f2.truncate(0)
+                                f2.write(self.monitoring_filename + '*' + str(self.last_offset))
+                        except:
+                            pass
+
                     line_data = self.removeTimestamp(line, self.date_time_format)
                     self.last_offset = self.drain_handler.training(line_data, self.monitoring_filename, self.last_offset)
 
