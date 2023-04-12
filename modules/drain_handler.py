@@ -3,10 +3,13 @@ import re
 import json
 import os
 import yaml
+import configparser
+import logging
 from os.path import dirname
 from drain3 import TemplateMiner
 from drain3.template_miner_config import TemplateMinerConfig
 from drain3.file_persistence import FilePersistence
+from drain3.masking import MaskingInstruction
 
 persistence_type = "FILE"
 
@@ -44,18 +47,44 @@ class DrainHandler:
     def __init__(self, config):
         self.name = config['name'] if 'name' in config else ''
         self.drain_file_name = config['snapshot-file'] if 'snapshot-file' in config else self.monitoring_file
-        self.similarity_threshold = config['similarity-threshold'] if 'similarity-threshold' in config else 0.4
         self.duplicate_allow_count = config['duplicate-allow-count'] if 'duplicate-allow-count' in config else 1000
+        self.words = config['words'] if 'words' in config else []
 
         self.config_file_name = dirname(__file__) + "\\..\\drain3.ini"
         self.tempname = self.name + '.txt'
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
         persistence = FilePersistence(f"{self.file_fullpath}\\..\\output\\result\\{self.drain_file_name}")
 
+        parser = configparser.ConfigParser()
+        logger = logging.getLogger(__name__)
+        section_drain = 'DRAIN'
+        section_masking = 'MASKING'
+
+        read_files = parser.read(self.config_file_name, encoding='utf-8')
+        if len(read_files) == 0:
+            logger.warning(f"config file not found: {self.config_file_name}")
+        
+        default_sim_th = parser.getfloat(section_drain, 'sim_th')
+        self.similarity_threshold = config['similarity-threshold'] if 'similarity-threshold' in config else default_sim_th
+
         config = TemplateMinerConfig()
         config.load(self.config_file_name)
         config.drain_sim_th = self.similarity_threshold  # Override
-        config.profiling_enabled = True
+        config.profiling_enabled = True                  # Override
+
+        masking_instructions_str = parser.get(section_masking, 'masking').replace("\n", "")
+        additional_words_prefix = '{"regex_pattern":"(?i)((?<=[^A-Z0-9가-힣])|^)(?!'
+        additional_words_postfix= ').*((?=.*[^A-Z0-9가-힣])|$)", "mask_with": "WORD"}'
+        additional_words = additional_words_prefix + '|'.join([f".*{i}" for i in self.words]) + additional_words_postfix
+        
+        masking_instructions_str = f"{masking_instructions_str[:-1]},{additional_words}]"
+
+        masking_instructions = []
+        masking_list = json.loads(masking_instructions_str)
+        for mi in masking_list:
+            instruction = MaskingInstruction(mi['regex_pattern'], mi['mask_with'])
+            masking_instructions.append(instruction)
+        config.masking_instructions = masking_instructions
 
         self.template_miner = TemplateMiner(persistence, config)
         self.line_count = 0
@@ -71,9 +100,13 @@ class DrainHandler:
         self.monitoring_file_name = monitoringfilename
         line = line.rstrip()
         self.line_count = offset
+        filtered_line = re.sub(u'\u0000', '', line)
+        if filtered_line == "":
+            return self.line_count
+        
         #matchCluster = self.template_miner.match(line)
         if True:
-            result = self.template_miner.add_log_message(re.sub(u'\u0000', '', line))
+            result = self.template_miner.add_log_message(filtered_line)
 
             if self.line_count % self.duplicate_allow_count == 0:
                 try:

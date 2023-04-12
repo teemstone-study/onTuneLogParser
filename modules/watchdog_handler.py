@@ -14,6 +14,8 @@ class Handler(FileSystemEventHandler):
         self.monitoring_extension = monitoring['extension'] if 'extension' in monitoring else 'log'
         self.monitoring_filename = None
 
+        self.date_time_format = str(monitoring['date-time-format']).strip() if 'date-time-format' in monitoring else ''
+
         self.initial_complete_flag = False
         self.name = config['name'] if 'name' in config else ''
         self.tempname = self.name + '.txt'
@@ -73,6 +75,19 @@ class Handler(FileSystemEventHandler):
         elif self.monitoring_pattern == 'minute':
             regex = r"{}_(\d{{10}})[0]*[.]{}".format(self.monitoring_file, self.monitoring_extension)
             return True if re.match(regex, file) else False
+        else:
+            pattern_sub_regex = re.sub('[:._\-\sT]','-', self.monitoring_pattern)                                       # yyyy-mm-dd-HHMMSS
+            pattern_sub_regex = re.sub('[A-Za-z]', '0', pattern_sub_regex)                                              # 0000-00-00-000000            
+            sub_regex_arr = pattern_sub_regex.split('-')
+            sub_regex_str = str()
+            for sub_regex in sub_regex_arr:
+                sub_regex_str += '(\d{' + str(len(sub_regex)) + '})' + '-' if sub_regex != '' else ''                   # (\d{4})-(\d{2})-(\d{2})-(\d{6})
+
+            prefix_sub_regex = re.sub('[:._\-\s]','-', self.monitoring_file)                                            # postgresql-
+            regex_str = r"{}{}{}".format(prefix_sub_regex, sub_regex_str, self.monitoring_extension)                    # postgresql-(\d{4})-(\d{2})-(\d{2})-(\d{6})-log
+
+            regex_file = re.sub('[:._\-\sT]','-', file)                                                                 # postgresql-2023-03-01-123123-log
+            return True if re.match(regex_str, regex_file) else False
 
     def get_lastdata(self):
         try:
@@ -89,6 +104,22 @@ class Handler(FileSystemEventHandler):
             self.last_filename = ''
             self.last_offset = 0
 
+    def removeTimestamp(self, line, date_time_format):
+        date_format_regex = re.sub('[:._\-\sT]','-', date_time_format)      # yyyy-MM-dd-HH-mm-ss-fff
+        date_format_regex = re.sub('[A-Za-z]', '0', date_format_regex)      # 0000-00-00-00-00-00-000
+
+        line_data_regex = re.sub('[:._\-\sT]','-', line)                    # 2023-03-02-10-34-55.980-abcdefg-blah-blah
+        line_data_regex = re.sub('[0-9]', '0', line_data_regex)             # 0000-00-00-00-00-00-000-abcdefg-blah-blah
+        line_data_regex = re.sub('[A-Za-z]', '9', line_data_regex)          # 0000-00-00-00-00-00-000-9999999-999-999
+
+        m = re.match(date_format_regex, line_data_regex)
+        if m:
+            start = m.start()
+            end = m.end()
+            return (line[:start]+line[end:]).strip()                        # abcdefg blah blah
+        else:
+            return line
+
     def drainTraining(self):
         self.drain_handler.set_init_offset(0)
         if os.path.basename(self.monitoring_filename) != self.last_filename:
@@ -101,12 +132,14 @@ class Handler(FileSystemEventHandler):
         try:
             with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
                 for line in f.readlines()[self.last_offset:]:
-                    self.last_offset = self.drain_handler.training(line, self.monitoring_filename, self.last_offset)
+                    line_data = self.removeTimestamp(line, self.date_time_format)
+                    self.last_offset = self.drain_handler.training(line_data, self.monitoring_filename, self.last_offset)
         except:
             # ANSI 인코딩으로 인한 에러 발생시
             with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
                 for line in f.readlines()[self.last_offset:]:
-                    self.last_offset = self.drain_handler.training(line, self.monitoring_filename, self.last_offset)
+                    line_data = self.removeTimestamp(line, self.date_time_format)
+                    self.last_offset = self.drain_handler.training(line_data, self.monitoring_filename, self.last_offset)
 
     def drainInference(self):
         try:

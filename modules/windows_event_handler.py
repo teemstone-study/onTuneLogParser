@@ -18,7 +18,9 @@ class WindowsEventHandler():
         self.mode = config['mode'] if 'mode' in config else 'training'
         self.snapshot_file = config['snapshot-file'] if 'snapshot-file' in config else self.monitoring_file
         self.initial_training = config['initial-training'] if 'initial-training' in config else False
+        self.report = config['report'] if 'report' in config else False
 
+        self.drain_handler = DrainHandler(config)
         self.setEventfilename()
         self.initGetEvent()
 
@@ -45,7 +47,6 @@ class WindowsEventHandler():
         hand = wevt.OpenEventLog(self.server,self.logtype)
         flags = wevt.EVENTLOG_FORWARDS_READ|wevt.EVENTLOG_SEQUENTIAL_READ
 
-        self.drain_handler = DrainHandler(self.snapshot_file, self.name)
         while True:
             events = wevt.ReadEventLog(hand, flags, 0)
             if len(events) == 0:
@@ -74,6 +75,9 @@ class WindowsEventHandler():
 
         flags = wevt.EVENTLOG_BACKWARDS_READ|wevt.EVENTLOG_SEQUENTIAL_READ
         self.current_total = wevt.GetNumberOfEventLogRecords(hand)
+
+        if self.report:
+            self.drain_handler.report(self.name)
 
     def run(self):
         while True:
