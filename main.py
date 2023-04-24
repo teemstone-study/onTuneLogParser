@@ -1,5 +1,4 @@
 import platform
-import threading
 import os 
 import yaml
 from dotenv import load_dotenv
@@ -24,8 +23,8 @@ def createDirectory(directory):
 def create_Dir():
     file_fullpath = os.path.dirname(os.path.abspath(__file__))
     createDirectory(file_fullpath + "\\output\\windows_event_log")
-    createDirectory(file_fullpath + "\\output\\result")
-    createDirectory(file_fullpath + "\\temp")
+    createDirectory(file_fullpath + "\\output\\training")
+    createDirectory(file_fullpath + "\\output\\offset")
 
 def working(work):
     if "monitoring" in work and "file" in work["monitoring"]:
@@ -46,8 +45,13 @@ def main():
     create_Dir()
     _config = load_Yaml()
 
-    # Dir Check Thread Create
     data = _config['data']
+    common = _config['common']
+
+    for d in data:
+        d['interval'] = d['interval'] if 'interval' in d else (common['interval'] if 'interval' in common else 1)
+        d['minimum-length'] = d['minimum-length'] if 'minimum-length' in d else (common['minimum-length'] if 'minimum-length' in common else 10)
+
     result = workThread(data, len(data))
     print(result)
 
