@@ -114,10 +114,10 @@ class MonitoringHandler():
 
     def removeTimestamp(self, line, date_time_format):
         date_format_regex = re.sub('[:._\-\sT]','-', date_time_format)      # yyyy-MM-dd-HH-mm-ss-fff
-        date_format_regex = re.sub('[A-Za-z]', '0', date_format_regex)      # 0000-00-00-00-00-00-000
+        date_format_regex = re.sub('[A-Za-z\[\]]', '0', date_format_regex)      # 0000-00-00-00-00-00-000
 
         line_data_regex = re.sub('[:._\-\sT]','-', line)                    # 2023-03-02-10-34-55.980-abcdefg-blah-blah
-        line_data_regex = re.sub('[0-9]', '0', line_data_regex)             # 0000-00-00-00-00-00-000-abcdefg-blah-blah
+        line_data_regex = re.sub('[0-9\[\]]', '0', line_data_regex)             # 0000-00-00-00-00-00-000-abcdefg-blah-blah
         line_data_regex = re.sub('[A-Za-z]', '9', line_data_regex)          # 0000-00-00-00-00-00-000-9999999-999-999
 
         m = re.match(date_format_regex, line_data_regex)

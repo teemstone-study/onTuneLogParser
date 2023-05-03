@@ -17,7 +17,7 @@ from drain3.masking import MaskingInstruction
 PERSISTENCE_TYPE = "FILE"
 NORMAL_WORDS = "<:WORD:>"
 SPECIFIC_WORDS = "Specific_Words"
-SPECIFIC_WORDS_PATTERN = f"--- {SPECIFIC_WORDS} ---"
+SPECIFIC_WORDS_PATTERN = f"---{SPECIFIC_WORDS}---"
 
 class DrainHandler:
     def __init__(self, config):
@@ -50,26 +50,26 @@ class DrainHandler:
         cfg.profiling_enabled = True                  # Override
 
         # PATH Add
-        self.words.append("<:0PATH0:>")
-        self.words.append(SPECIFIC_WORDS)
-        masking_instructions_str = parser.get(section_masking, 'masking')
-        additional_words_prefix = '{"regex_pattern":"(?i)\\\\b(?:(?!'
-        additional_words_postfix= ')[a-z])+\\\\b", "mask_with": "WORD"}'
-        additional_words = additional_words_prefix + '|'.join(list(i.replace(" ","_") for i in self.words)) + additional_words_postfix
+#         self.words.append("<:0PATH0:>")
+#         self.words.append(SPECIFIC_WORDS)
+#         masking_instructions_str = parser.get(section_masking, 'masking')
+#         additional_words_prefix = '{"regex_pattern":"(?i)\\\\b(?:(?!'
+#         additional_words_postfix= ')[a-z])+\\\\b", "mask_with": "WORD"}'
+#         additional_words = additional_words_prefix + '|'.join(list(i.replace(" ","_") for i in self.words)) + additional_words_postfix
         
-        additional_paths = '{"regex_pattern":"<:0PATH0:>", "mask_with": "PATH"}'
-        masking_instructions_str = f"""[
-{{"regex_pattern":"(?i)((?<=[^A-Za-z0-9])|^)([A-Z]:)?(\\\\\\\\[A-Z0-9_\\\\s\\\\-]+)+(.[A-Z]+)?((?=[^A-Za-z0-9])|$)", "mask_with": "0PATH0"}},
-{{"regex_pattern":"(?i)((?<=[^A-Za-z0-9])|^)([A-Z]:)?(/[A-Z0-9_\\\\s\\\\-]+)+(.[A-Z]+)?((?=[^A-Za-z0-9])|$)", "mask_with": "0PATH0"}},
-{additional_words},{additional_paths},{masking_instructions_str[1:]}"""
-        masking_instructions_str = masking_instructions_str.replace("\n", "")
+#         additional_paths = '{"regex_pattern":"<:0PATH0:>", "mask_with": "PATH"}'
+#         masking_instructions_str = f"""[
+# {{"regex_pattern":"(?i)((?<=[^A-Za-z0-9])|^)([A-Z]:)?(\\\\\\\\[A-Z0-9_\\\\s\\\\-]+)+(.[A-Z]+)?((?=[^A-Za-z0-9])|$)", "mask_with": "0PATH0"}},
+# {{"regex_pattern":"(?i)((?<=[^A-Za-z0-9])|^)([A-Z]:)?(/[A-Z0-9_\\\\s\\\\-]+)+(.[A-Z]+)?((?=[^A-Za-z0-9])|$)", "mask_with": "0PATH0"}},
+# {additional_words},{additional_paths},{masking_instructions_str[1:]}"""
+#         masking_instructions_str = masking_instructions_str.replace("\n", "")
 
-        masking_instructions = []
-        masking_list = json.loads(masking_instructions_str)
-        for mi in masking_list:
-            instruction = MaskingInstruction(mi['regex_pattern'], mi['mask_with'])
-            masking_instructions.append(instruction)
-        cfg.masking_instructions = masking_instructions
+#         masking_instructions = []
+#         masking_list = json.loads(masking_instructions_str)
+#         for mi in masking_list:
+#             instruction = MaskingInstruction(mi['regex_pattern'], mi['mask_with'])
+#             masking_instructions.append(instruction)
+#         cfg.masking_instructions = masking_instructions
 
         self.template_miner = TemplateMiner(persistence, cfg)
 
@@ -94,8 +94,10 @@ class DrainHandler:
                 def get_specific_words_cluster_size(loaded_drain):
                     size = 0
                     for c in loaded_drain.id_to_cluster.values():
-                        cluster_token_prefix = ' '.join(c.log_template_tokens[:4])
-                        if cluster_token_prefix == SPECIFIC_WORDS_PATTERN.replace("_", " "):
+                        applied_delimiter_swp = SPECIFIC_WORDS_PATTERN.replace("_", " ")
+                        applied_delimiter_swp_size = len(applied_delimiter_swp.split())
+                        cluster_token_prefix = ' '.join(c.log_template_tokens[:applied_delimiter_swp_size])
+                        if cluster_token_prefix == applied_delimiter_swp:
                             size += c.size
                     return size
                 
@@ -103,6 +105,7 @@ class DrainHandler:
                 self.total_cluster_size = loaded_drain.get_total_cluster_size()
                 self.specific_words_cluster_size = get_specific_words_cluster_size(loaded_drain)
                 self.normal_words_cluster_size = self.total_cluster_size - self.specific_words_cluster_size
+                print(f"{self.name}, {self.total_cluster_size}, {self.specific_words_cluster_size}, {self.normal_words_cluster_size}")
 
     def get_training_data(self, line):
         line = line.rstrip()

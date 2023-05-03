@@ -37,6 +37,21 @@ class WindowsEventHandler(MonitoringHandler):
     def initGetEvent(self):
         hand = wevt.OpenEventLog(self.server,self.logtype)
         flags = wevt.EVENTLOG_FORWARDS_READ|wevt.EVENTLOG_SEQUENTIAL_READ
+        last_offset_date = str()
+        lines = list()
+        event_time_length_format = "2000-01-01 00:00:00"
+        # event_time_format = "%Y-%m-%d %H:%M:%S"        
+
+        try:
+            with open(self.monitoring_filename, 'r', encoding='UTF8') as f:
+                lines = f.readlines()
+                for i in reversed(list(range(len(lines)-1))):
+                    if len(lines[i]) > len(event_time_length_format):
+                        last_offset_date = lines[i][1:len(event_time_length_format)+1]
+                        break
+        except:
+            pass
+
 
         def writeEventLog(evt, f):
             idResult = evt.EventID & 0x0000FFFF
@@ -56,12 +71,13 @@ class WindowsEventHandler(MonitoringHandler):
                 break
             if events:
                 try:
-                    self.setMonitoringFilename() 
-                    with open(self.monitoring_filename, 'a', encoding='UTF8') as f:
-                        for evt in events:
-                            writeEventLog(evt, f)
+                    if last_offset_date == "" or str(events[0].TimeGenerated)[:len(event_time_length_format)] >= last_offset_date:
+                        self.setMonitoringFilename() 
+                        with open(self.monitoring_filename, 'a', encoding='UTF8') as f:
+                            for evt in events:
+                                writeEventLog(evt, f)
 
-                    self.check()
+                        self.check()
                 except:
                     pass
 
