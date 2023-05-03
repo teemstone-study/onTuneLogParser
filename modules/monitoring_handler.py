@@ -16,12 +16,12 @@ class MonitoringHandler():
         self.initial_complete_flag = False
         self.name = config['name'] if 'name' in config else ''
         self.offsetfile = self.name + '.txt'
-        self.mode = config['mode'] if 'mode' in config else 'training'
-        self.initial_check = config['initial-check'] if 'initial-check' in config else False
+        self.mode = config['mode']
+        self.initial_check = config['initial-check']
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
         self.drain_handler = DrainHandler(config)
 
-        self.report = config['report'] if 'report' in config else False
+        self.report = config['report']
         self.offsetfile = self.name + '.txt'
 
     def initialCheck(self):

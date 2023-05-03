@@ -51,6 +51,10 @@ def main():
     for d in data:
         d['interval'] = d['interval'] if 'interval' in d else (common['interval'] if 'interval' in common else 1)
         d['minimum-length'] = d['minimum-length'] if 'minimum-length' in d else (common['minimum-length'] if 'minimum-length' in common else 10)
+        d['mode'] = d['mode'] if 'mode' in d else (common['mode'] if 'mode' in common else 'training')
+        d['report'] = d['report'] if 'report' in d else (common['report'] if 'report' in common else False)
+        d['initial-check'] = d['initial-check'] if 'initial-check' in d else (common['initial-check'] if 'initial-check' in common else False)
+        d['similarity-threshold'] = d['similarity-threshold'] if 'similarity-threshold' in d else (common['similarity-threshold'] if 'similarity-threshold' in common else 0.4)
 
     result = workThread(data, len(data))
     print(result)
