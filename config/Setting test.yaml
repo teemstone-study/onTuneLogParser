@@ -1,0 +1,21 @@
+common:
+  interval: 1
+  minimum-length: 10
+  mode: training
+  report: true
+  initial-check: true
+  similarity-threshold: 1
+  match-rate: 1
+
+data:
+  - monitoring:
+      directory: 'D:\logs\test'
+      pattern: none
+      file: n
+      extension: txt
+      date-time-format: 'yyyy MM-dd HH:mm:ss'
+    interval: 10
+    name: test
+    type: normal
+    snapshot-file: test.bin
+    depth: 3

@@ -22,6 +22,8 @@ class WindowsEventHandler(MonitoringHandler):
         if self.report:
             self.drain_handler.report(self.name)
 
+        self.initial_complete_flag = True
+
     def setMonitoringFilename(self):
         self.file_fullpath = os.path.dirname(os.path.abspath(__file__))
         filename = self.monitoring_file        
@@ -115,7 +117,7 @@ class WindowsEventHandler(MonitoringHandler):
                             break
                     f.close()
 
-                    self.check()
+                    self.intervalCheck()
                     self.current_total += len(events)
     
 def windows_event_log_check(config):

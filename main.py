@@ -55,6 +55,11 @@ def main():
         d['report'] = d['report'] if 'report' in d else (common['report'] if 'report' in common else False)
         d['initial-check'] = d['initial-check'] if 'initial-check' in d else (common['initial-check'] if 'initial-check' in common else False)
         d['similarity-threshold'] = d['similarity-threshold'] if 'similarity-threshold' in d else (common['similarity-threshold'] if 'similarity-threshold' in common else 0.4)
+        d['match-rate'] = d['match-rate'] if 'match-rate' in d else (common['match-rate'] if 'match-rate' in common else 0)
+        d['match-max-count'] = d['match-max-count'] if 'match-max-count' in d else (common['match-max-count'] if 'match-max-count' in common else 0)
+        d['depth'] = d['depth'] if 'depth' in d else (common['depth'] if 'depth' in common else 4)
+        d['compress-state'] = d['compress-state'] if 'compress-state' in d else (common['compress-state'] if 'compress-state' in common else True)
+        d['parametrize-numeric-tokens'] = d['parametrize-numeric-tokens'] if 'parametrize-numeric-tokens' in d else (common['parametrize-numeric-tokens'] if 'parametrize-numeric-tokens' in common else True)
 
     result = workThread(data, len(data))
     print(result)

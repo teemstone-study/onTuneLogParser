@@ -12,6 +12,7 @@ class MonitoringHandler():
         self.monitoring_filename = None
 
         self.date_time_format = str(monitoring['date-time-format']).strip() if 'date-time-format' in monitoring else ''
+        self.no_datetime_log = config['no-datetime-log'] if 'no-datetime-log' in config else "separate"
 
         self.initial_complete_flag = False
         self.name = config['name'] if 'name' in config else ''
@@ -50,6 +51,7 @@ class MonitoringHandler():
     def intervalCheck(self):
         if self.monitoring_filename and self.initial_complete_flag:
             self.check()
+            self.drain_handler.save_state()
 
     def check(self):
         if os.path.basename(self.monitoring_filename) != self.last_filename:
@@ -124,34 +126,74 @@ class MonitoringHandler():
         if m:
             start = m.start()
             end = m.end()
-            return (line[:start]+line[end:]).strip()                        # abcdefg blah blah
+            return ((line[:start]+line[end:]).strip(), True)                        # abcdefg blah blah
         else:
-            return line
+            return (line, False)
 
     def drainTraining(self):
+        def execute_training(f):
+            last_offset = self.last_offset
+            if self.no_datetime_log == "separate":
+                for line in f.readlines()[last_offset:]:
+                    line_data, _ = self.removeTimestamp(line, self.date_time_format)
+                    input_line_data = line_data.rstrip()
+                    self.last_offset = self.drain_handler.training(input_line_data, self.monitoring_filename, self.last_offset)
+            elif self.no_datetime_log == "streaming":
+                input_line_data = str()
+                for line in f.readlines()[last_offset:]:
+                    line_data, datetime_flag = self.removeTimestamp(line, self.date_time_format)
+
+                    if datetime_flag and input_line_data:
+                        self.last_offset = self.drain_handler.training(input_line_data, self.monitoring_filename, self.last_offset)
+                        input_line_data = str()
+                    else:
+                        self.last_offset += 1
+
+                    input_line_data = input_line_data + line_data.rstrip()
+
+                if input_line_data:
+                    self.last_offset = self.drain_handler.training(input_line_data, self.monitoring_filename, self.last_offset)
+
         try:
             with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
-                for line in f.readlines()[self.last_offset:]:
-                    line_data = self.removeTimestamp(line, self.date_time_format)
-                    self.last_offset = self.drain_handler.training(line_data, self.monitoring_filename, self.last_offset)                    
+                execute_training(f)
         except:
             # ANSI 인코딩으로 인한 에러 발생시
             with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
-                for line in f.readlines()[self.last_offset:]:
-                    line_data = self.removeTimestamp(line, self.date_time_format)
-                    self.last_offset = self.drain_handler.training(line_data, self.monitoring_filename, self.last_offset)
+                execute_training(f)
 
     def drainInference(self):
+        def execute_inference(f):
+            last_offset = self.last_offset
+            if self.no_datetime_log == "separate":
+                for line in f.readlines()[last_offset:]:
+                    line_data, _ = self.removeTimestamp(line, self.date_time_format)
+                    input_line_data = line_data.rstrip()
+                    input_line = line.rstrip()
+                    self.last_offset = self.drain_handler.inference(input_line, line_data, self.last_offset, self.monitoring_filename)
+            elif self.no_datetime_log == "streaming":
+                input_line_data = str()
+                input_line = str()
+                for line in f.readlines()[last_offset:]:
+                    line_data, datetime_flag = self.removeTimestamp(line, self.date_time_format)
+
+                    if datetime_flag and input_line_data:
+                        self.last_offset = self.drain_handler.inference(input_line, input_line_data, self.last_offset, self.monitoring_filename)
+                        input_line_data = str()
+                        input_line = str()
+                    else:
+                        self.last_offset += 1
+
+                    input_line_data = input_line_data + line_data.rstrip()
+                    input_line = input_line + line.rstrip()
+
+                if input_line_data:
+                    self.last_offset = self.drain_handler.inference(input_line, input_line_data, self.last_offset, self.monitoring_filename)
+
         try:
             with open(self.monitoring_filename, 'rt', encoding='UTF8') as f:
-                for line in f.readlines()[self.last_offset:]:
-                    line_data = self.removeTimestamp(line, self.date_time_format)
-                    line_data = line_data.replace('\n', '')
-                    self.last_offset = self.drain_handler.inference(line, line_data, self.last_offset, self.monitoring_filename)
+                execute_inference(f)                    
         except:
-            # ANSI 인코딩으로 인한 에러 발생시
+            # ANSI 인코딩으로 인한 에러 발생시            
             with open(self.monitoring_filename, 'rt', encoding='ANSI') as f:
-                for line in f.readlines()[self.last_offset:]:
-                    line_data = self.removeTimestamp(line, self.date_time_format)
-                    line_data = line_data.replace('\n', '')
-                    self.last_offset = self.drain_handler.inference(line, line_data, self.last_offset, self.monitoring_filename)
+                execute_inference(f)
