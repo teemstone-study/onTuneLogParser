@@ -25,84 +25,85 @@ Primary configuration parameters:
 
 ## Setting.yaml File Configuration
 
-Setting.yaml File is prior to drain3.ini File.
+The Setting.yaml file takes precedence over the drain3.ini file.
 
-This is configured by some monitoring targets. It allows directories, Windows system monitoring and will apply Linux system monitoring.
+This file is configured for monitoring targets and allows for directories, Windows system monitoring, and Linux system monitoring.
 
 ### Common configuration parameters:
 
-- `interval` - monitoring target interval (secs)
-- `minimum-length` - allows to train and infer the target log's length
-- `mode` - either `training` or `inference`(default `training`)
-- `report` - want to show a training report, true or false(default false)
+- `interval` - Specifies the monitoring target interval in seconds.
+- `minimum-length` - Determines the minimum length of the target log to train and infer.
+- `mode` - Sets the mode to either `training` or `inference` (default: `training`).
+- `report` - Specifies whether to show a training report (true or false, default: false).
 - `initial-check`
-  * directory: check all files in the directory initially 
-  * Windows Event: check today's all events and save the event_log file, and check the event_log file initially
-- `similarity-threshold` - Drain3 `sim_th` value, refer to drain3-sim_th(default 0.4)
+  * `directory`: Checks all files in the directory initially.
+  * `Windows Event`: Checks all events for the current day, saves the event_log file, and performs an initial check on the event_log file.
+- `similarity-threshold` - Sets the similarity threshold for Drain3 (sim_th value, default: 0.4).
 - `match-rate` 
-  * used only when mode is `inference`
-  * except logs that contains specific words, match logs with the training data in the others 
-  * between 0 and 1(default 0)
-  * if a value is 0 then the variable is unused 
-  * if a value is 1 then the all logs are matched
-  * if a value is 0.01, that means lower than 1 percent clusters are only matched
-  * exclusively using the parameter `match-max-count`
+  * Used only in `inference` mode.
+  * Matches logs with training data except for logs containing specific words.
+  * The value should be between 0 and 1 (default: 0).
+  * If the value is 0, the variable is unused.
+  * If the value is 1, all logs are matched.
+  * If the value is 0.01, only clusters with less than 1 percent match.
+  * This parameter is exclusively used with the `match-max-count` parameter.
 - `match-max-count`
-  * used only when mode is `inference`
-  * except logs that contains specific words, match logs with the training data in the others
-  * values are allowed to 0 or natural numbers.
-  * if a value is 0 then the variable is unused
-  * if a value is 1 then only 1 size clusters are matched
-  * if a value is 10 then lower than 10 size clusters are matched
-  * execlusively using the parameter `match-rate`
-- `compress-state` - Drain3 `compress_state` values, refer to drain3-compress_state(default true)
-- `parametrize-numeric-tokens` - Drain3 `parametrize_numeric_tokens` value, refer to drain3-TemplateMinerConfig.parametrize_numeric_tokens(default True)
+  * Used only in `inference` mode.
+  * Matches logs with training data except for logs containing specific words.
+  * The value can be 0 or a natural number.
+  * If the value is 0, the variable is unused.
+  * If the value is 1, only clusters of size 1 are matched.
+  * If the value is 10, only clusters of size less than 10 are matched.
+  * This parameter is exclusively used with the `match-rate` parameter.
+- `compress-state` - Specifies the Drain3 compress_state value (default: true).
+- `parametrize-numeric-tokens` - Specifies the Drain3 parametrize_numeric_tokens value (default: True).
 
 ### Monitoring Configuration Parameters:
-- All common parameters can use in the monitoring parameters and monitoring parameters is prior to common parameters.
-- `type` - either `normal`, `windows-event`(default `normal`)
-- `name` - log parsing monitoring name, it is used to create report, offset, inference files(default ``)
-- `snapshot-file` - log parsing training file name, it must be declared
+- All common parameters can be used in monitoring parameters, and monitoring parameters take precedence over common parameters.
+- `type` - Specifies either `normal` or `windows-event` (default: `normal`).
+- `name` - Specifies the log parsing monitoring name, used to create reports, offsets, and inference files (default: "").
+- `snapshot-file` - Specifies the log parsing training file name (must be declared).
 - `words` 
-  * array of specific words
-  * regardless of `match-rate` or `match-max-count`, if a log contains the words, the log must be matched
-  * default []
+  * Array of specific words.
+  * If a log contains these words, the log must be matched regardless of the match-rate or match-max-count.
+  * Default: [].
 - `ignore-words`
-  * array of ignore words
-  * the words are removed when execute training
-  * default []
+  * Array of words to ignore.
+  * These words are removed during training.
+  * Default: [].
 - `custom-masking-words`
-  * array of custom masking words
-  * `custom-masking-words/source` - source regular expression(e.g `([A-Za-z]+)_(\d+)`)
-  * `custom-masking-words/target` - target regular expression(e.g `\1-<:DATETIME:>`)
-  * warning - `source` and `target` don't use `<:*:>` because the pattern is drain3's custom masking pattern, if the pattern is used then training data is not valid
-  * default []
+  * Array of custom masking words.
+  * `custom-masking-words/source` - Specifies the source regular expression (e.g., `([A-Za-z]+)_(\d+)`).
+  * `custom-masking-words/target` - Specifies the target regular expression (e.g., `\1-<:DATETIME:>`).
+  * warning - Do not use `<:*:>` in the source and target because it is Drain3's custom masking pattern. Using this pattern will render the training data invalid.
+  * Default: [].
 - `no-datetime-log`
-  * used only `monitoring/date-time-format` is used
-  * either `streaming` or `separate`(default `separate`)
-  * `streaming`: if a log doesn't contain `monitoring/date-time-format` then the log is considered to follow the previous log
-  * `separate`: regardless of `monitoring/date-time-format`, a log is consideres to an independent log
+  * Used only when `monitoring/date-time-format` is used.
+  * Can be set to either `streaming` or `separate` (default: `separate`).
+  * `streaming`: If a log doesn't contain `monitoring/date-time-format`, the log is considered to follow the previous log.
+  * `separate`: Regardless of `monitoring/date-time-format`, each log is considered independent.
 - `monitoring/directory`
-  * normal: monitor a specific directory
-  * windows-event: monitor a directory to save the windows event
-  * must be declared
+  * Specifies the directory to monitor.
+  * `normal`: For monitoring a specific directory.
+  * `windows-event`: For monitoring a directory to save Windows events.
+  * Must be declared.
 - `monitoring/pattern`
-  * can be used in `none`, `day`, `hour`, `minute` and a customized date-time format(default `none`)
-  * `none`: no file's postfix
-  * `day`: file's postfix is `yyMMDD` or `yyMMDD00` date format
-  * `hour`: file's postfix is `yyMMDDHH` date-time format
-  * `minute`: file's postfix is `yyMMDDHHmm` date-time format
-  * customized date-time format: can be used a cutomized format(e.g `yyyy-MM-dd_HHmmss`)
-- `monitoring/extension`: monitoring file's extension(default `txt`)
+  * Can be used with `none`, `day`, `hour`, `minute`, or a customized date-time format (default: `none`).
+  * `none`: No postfix for the file.
+  * `day`: The file's postfix follows the `yyMMDD` or `yyMMDD00` date format.
+  * `hour`: The file's postfix follows the `yyMMDDHH` date-time format.
+  * `minute`: The file's postfix follows the `yyMMDDHHmm` date-time format.
+  * Customized date-time format: Can be a customized format (e.g., `yyyy-MM-dd_HHmmss`).
+- `monitoring/extension`: Specifies the file extension for monitoring files (default: `txt`).
 - `monitoring/file`
-  * monitoring file name, it must be declared
-  * except `monitoring/pattern` is `none`, the file name is can be used the file's prefix
-  * monitor the file's name is `{monitoring/file}_{monitoring/pattern}.{monitoring/extension}`
+  * Specifies the monitoring file name and must be declared.
+  * If `monitoring/pattern` is not set to `none`, the file name can use the file's prefix.
+  * The monitoring file name follows the format: `{monitoring/file}_{monitoring/pattern}.{monitoring/extension}`
 - `monitoring/date-time-format`
-  * it is different to `monitoring/pattern`
-  * if a log is `yyyy-MM-DD HH:mm:ss blah blah ...`
-    * when to execute training, the log's date-time-format(`yyyy-MM-DD HH:mm:ss`) is removed and remaining data is used by a training data
-    * a training data is `blah blah ...`
-  * if it is used, also can be used by `no-datetime-log`
+  * Different from `monitoring/pattern`
+  * If a log has the format `yyyy-MM-DD HH:mm:ss blah blah ...`:
+    * During training execution, the log's date-time-format (`yyyy-MM-DD HH:mm:ss`) is removed, and the remaining data is used as training data.
+    * The training data will be `blah blah ...`
+  * If used, it can also be used by `no-datetime-log`
 
   
